@@ -1,22 +1,19 @@
 """Core abstractions for classical state-space search.
 
-Follows standard AI formulation (Russell & Norvig, AI: A Modern Approach).
+Contains the fundamental classes:
+1. SearchResult: Container for search results and metrics (nodes expanded, runtime).
+2. Node: A search tree node (state, parent, action, path_cost, depth).
+3. Problem: Abstract base class defining formal search problem methods.
 """
 
-from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import Any, Generic, List, Optional, TypeVar
-
-StateT = TypeVar("StateT")
-ActionT = TypeVar("ActionT")
 
 
 @dataclass
 class SearchResult:
-    """Unified container for search metrics and results."""
-
-    solution_path: Optional[List[Any]] = None
-    total_cost: Optional[float] = None
+    """Stores the output and performance metrics of a search run."""
+    solution_path: list = None
+    total_cost: float = None
     nodes_expanded: int = 0
     nodes_generated: int = 0
     max_frontier_size: int = 0
@@ -25,32 +22,32 @@ class SearchResult:
     metadata: dict = field(default_factory=dict)
 
 
-class Node(Generic[StateT, ActionT]):
-    """Search tree node representing a path from initial state to state."""
+class Node:
+    """A node in the search tree.
 
-    __slots__ = ("state", "parent", "action", "path_cost", "depth", "heuristic_value", "_entry_id")
-    _counter = 0
+    Attributes:
+        state: The problem state at this node.
+        parent: The previous Node in the path.
+        action: The action taken to reach this node.
+        path_cost: Total path cost from start to here.
+        depth: Number of steps from the root.
+    """
 
-    def __init__(
-        self,
-        state: StateT,
-        parent: Optional[Node[StateT, ActionT]] = None,
-        action: Optional[ActionT] = None,
-        path_cost: float = 0.0,
-        heuristic_value: float = 0.0,
-    ) -> None:
+    def __class_getitem__(cls, item):
+        """Allows writing Node[State, Action] for backwards compatibility."""
+        return cls
+
+    def __init__(self, state, parent=None, action=None, path_cost=0.0, heuristic_value=0.0):
         self.state = state
         self.parent = parent
         self.action = action
-        self.path_cost = path_cost
+        self.path_cost = float(path_cost)
         self.depth = 0 if parent is None else parent.depth + 1
-        self.heuristic_value = heuristic_value
-        Node._counter += 1
-        self._entry_id = Node._counter
+        self.heuristic_value = float(heuristic_value)
 
-    def solution(self) -> List[ActionT]:
-        """Return the sequence of actions from root to this node."""
-        actions: List[ActionT] = []
+    def solution(self):
+        """Returns the list of actions from the start node to this node."""
+        actions = []
         curr = self
         while curr.parent is not None:
             if curr.action is not None:
@@ -59,51 +56,58 @@ class Node(Generic[StateT, ActionT]):
         actions.reverse()
         return actions
 
-    def state_path(self) -> List[StateT]:
-        """Return the sequence of states from root to this node."""
-        states: List[StateT] = []
-        curr: Optional[Node[StateT, ActionT]] = self
+    def state_path(self):
+        """Returns the list of states from the start node to this node."""
+        states = []
+        curr = self
         while curr is not None:
             states.append(curr.state)
             curr = curr.parent
         states.reverse()
         return states
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"<Node state={self.state!r} cost={self.path_cost}>"
 
-    def __lt__(self, other: Node) -> bool:
-        """Tie-breaker for priority queues if evaluation function ties."""
-        return self._entry_id < other._entry_id
 
+class Problem:
+    """Base template for all search problems.
 
-class Problem(Generic[StateT, ActionT]):
-    """Abstract formal problem definition."""
+    Any specific search problem overrides:
+    - initial_state()
+    - actions(state)
+    - result(state, action)
+    - is_goal(state)
+    """
 
-    def initial_state(self) -> StateT:
-        """Return the initial state."""
+    def __class_getitem__(cls, item):
+        """Allows writing Problem[State, Action] for backwards compatibility."""
+        return cls
+
+    def initial_state(self):
+        """Returns the starting state."""
         raise NotImplementedError
 
-    def actions(self, state: StateT) -> List[ActionT]:
-        """Return valid actions available in the given state."""
+    def actions(self, state):
+        """Returns a list of valid actions from the given state."""
         raise NotImplementedError
 
-    def result(self, state: StateT, action: ActionT) -> StateT:
-        """Return the new state resulting from applying action to state."""
+    def result(self, state, action):
+        """Returns the new state after applying the action."""
         raise NotImplementedError
 
-    def is_goal(self, state: StateT) -> bool:
-        """Return True if state satisfies goal conditions."""
+    def is_goal(self, state):
+        """Returns True if the state satisfies the goal condition."""
         raise NotImplementedError
 
-    def step_cost(self, state: StateT, action: ActionT, next_state: StateT) -> float:
-        """Cost of taking action from state to next_state."""
+    def step_cost(self, state, action, next_state):
+        """Cost of taking action from state to next_state. Default is 1.0."""
         return 1.0
 
-    def heuristic(self, state: StateT) -> float:
-        """Estimated cost from state to goal (must be admissible for A* optimality)."""
+    def heuristic(self, state):
+        """Estimated cost from state to goal. Default is 0.0."""
         return 0.0
 
-    def prune(self, state: StateT) -> bool:
-        """Optional hook: return True if this partial state should be pruned early."""
+    def prune(self, state):
+        """Returns True if this partial state violates constraints and should be pruned."""
         return False

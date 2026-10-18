@@ -1,34 +1,32 @@
 """Breadth-First Search (BFS).
 
-Explores shallowest unexpanded nodes first using a FIFO queue.
-Guarantees finding the solution with the minimum number of steps (unit costs).
+Explores shallowest nodes first using a FIFO (First-In, First-Out) queue.
+Guarantees finding the shortest path when all step costs are equal.
 """
 
-from __future__ import annotations
-import collections
+from collections import deque
 import time
-from typing import Optional, Set
-from ai_engine.search.core import Node, Problem, SearchResult
+from ai_engine.search.core import Node, SearchResult
 
 
-def breadth_first_search(problem: Problem, max_depth: Optional[int] = None) -> SearchResult:
-    """Execute Breadth-First Search on the given problem.
+def breadth_first_search(problem, max_depth=None):
+    """Execute Breadth-First Search on a problem.
 
     Args:
-        problem: Problem instance defining initial_state, actions, result, is_goal.
-        max_depth: Optional cutoff depth to prevent runaway exploration.
+        problem: An instance of Problem defining initial_state, actions, result, is_goal.
+        max_depth: Optional depth limit.
 
     Returns:
-        SearchResult containing solution path, total cost, and exploration metrics.
+        SearchResult containing the solution path and performance metrics.
     """
     start_time = time.perf_counter()
-    initial = problem.initial_state()
+    initial_state = problem.initial_state()
 
-    # Early check for initial state
-    if problem.is_goal(initial):
+    # Step 1: Check if the starting state is already the goal
+    if problem.is_goal(initial_state):
         elapsed = (time.perf_counter() - start_time) * 1000.0
         return SearchResult(
-            solution_path=[initial],
+            solution_path=[initial_state],
             total_cost=0.0,
             nodes_expanded=0,
             nodes_generated=1,
@@ -38,35 +36,41 @@ def breadth_first_search(problem: Problem, max_depth: Optional[int] = None) -> S
             metadata={"depth": 0, "actions": []},
         )
 
-    root = Node(state=initial)
-    frontier = collections.deque([root])
-    explored: Set[object] = {initial}
+    # Step 2: Initialize FIFO Queue with root node, and track explored states
+    root = Node(state=initial_state)
+    frontier = deque([root])
+    explored = {initial_state}
 
     nodes_expanded = 0
     nodes_generated = 1
     max_frontier_size = 1
 
+    # Step 3: Loop while queue has nodes
     while frontier:
         max_frontier_size = max(max_frontier_size, len(frontier))
-        node = frontier.popleft()
+        current_node = frontier.popleft()  # FIFO: remove from front
         nodes_expanded += 1
 
-        if max_depth is not None and node.depth >= max_depth:
+        # Check depth limit
+        if max_depth is not None and current_node.depth >= max_depth:
             continue
 
-        for action in problem.actions(node.state):
-            child_state = problem.result(node.state, action)
+        # Step 4: Expand valid moves
+        for action in problem.actions(current_node.state):
+            child_state = problem.result(current_node.state, action)
             nodes_generated += 1
 
+            # Only visit unexplored states
             if child_state not in explored:
-                cost = node.path_cost + problem.step_cost(node.state, action, child_state)
+                cost = current_node.path_cost + problem.step_cost(current_node.state, action, child_state)
                 child_node = Node(
                     state=child_state,
-                    parent=node,
+                    parent=current_node,
                     action=action,
                     path_cost=cost,
                 )
 
+                # Goal test when node is generated
                 if problem.is_goal(child_state):
                     elapsed = (time.perf_counter() - start_time) * 1000.0
                     return SearchResult(
@@ -84,8 +88,9 @@ def breadth_first_search(problem: Problem, max_depth: Optional[int] = None) -> S
                     )
 
                 explored.add(child_state)
-                frontier.append(child_node)
+                frontier.append(child_node)  # FIFO: add to back of queue
 
+    # Step 5: Queue exhausted, no solution exists
     elapsed = (time.perf_counter() - start_time) * 1000.0
     return SearchResult(
         solution_path=None,

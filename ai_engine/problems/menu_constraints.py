@@ -4,20 +4,17 @@ Solves multi-course package building subject to budget limits and dietary rules.
 Implements both plain DFS and early-pruned DFS for benchmark comparison.
 """
 
-from __future__ import annotations
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence, Tuple
 from ai_engine.search.core import Problem, SearchResult
 from ai_engine.search.dfs import depth_first_search
 
 
 @dataclass(frozen=True)
 class Dish:
-    """A dish candidate for menu slots."""
-
+    """Represents a dish option for a menu course."""
     id: str
     name: str
-    category: str  # starter, main, dessert, drink, side
+    category: str  # starter, main, dessert
     price_per_head: float
     cost_per_head: float = 0.0
     is_vegetarian: bool = False
@@ -27,96 +24,85 @@ class Dish:
     popularity_score: float = 0.5
 
 
-# State: tuple of chosen Dish objects
-MenuState = Tuple[Dish, ...]
-
-
-class MenuConstraintProblem(Problem[MenuState, Dish]):
+class MenuConstraintProblem(Problem):
     """DFS Problem formulation for menu package assembly under constraints.
 
-    State: tuple of chosen Dish objects (one per slot).
-    Action: Dish to place in the next slot.
-    Goal: All slots filled and all hard constraints met.
+    State: tuple of chosen Dish objects so far (e.g., (Starter, Main)).
+    Action: Next Dish candidate to add.
+    Goal: All course slots filled AND all budget/dietary constraints satisfied.
     """
 
-    def __init__(
-        self,
-        slots: Sequence[str],  # e.g. ["starter", "main", "dessert"]
-        dishes: Sequence[Dish],
-        max_budget: float,
-        min_vegetarian: int = 0,
-        min_gluten_free: int = 0,
-        min_vegan: int = 0,
-    ) -> None:
+    def __init__(self, slots, dishes, max_budget, min_vegetarian=0, min_gluten_free=0, min_vegan=0):
         self.slots = list(slots)
-        self.max_budget = max_budget
-        self.min_vegetarian = min_vegetarian
-        self.min_gluten_free = min_gluten_free
-        self.min_vegan = min_vegan
+        self.max_budget = float(max_budget)
+        self.min_vegetarian = int(min_vegetarian)
+        self.min_gluten_free = int(min_gluten_free)
+        self.min_vegan = int(min_vegan)
 
-        # Group candidates by category
-        self.category_map: Dict[str, List[Dish]] = {}
+        # Group dish candidates by category (starter, main, dessert)
+        self.category_map = {}
         for d in dishes:
-            self.category_map.setdefault(d.category.lower(), []).append(d)
+            cat = d.category.lower()
+            self.category_map.setdefault(cat, []).append(d)
 
-    def initial_state(self) -> MenuState:
+    def initial_state(self):
+        """Initial state is an empty menu tuple."""
         return ()
 
-    def is_goal(self, state: MenuState) -> bool:
-        """Check if all slots are filled and all constraints satisfied."""
+    def is_goal(self, state):
+        """Returns True if all course slots are filled and all rules are satisfied."""
+        # 1. Must have all courses selected (e.g. Starter, Main, Dessert)
         if len(state) != len(self.slots):
             return False
 
-        # Budget constraint
+        # 2. Total price must be within budget
         total_price = sum(d.price_per_head for d in state)
         if total_price > self.max_budget:
             return False
 
-        # Vegetarian constraint
+        # 3. Vegetarian count check
         veg_count = sum(1 for d in state if d.is_vegetarian or d.is_vegan)
         if veg_count < self.min_vegetarian:
             return False
 
-        # Gluten-free constraint
+        # 4. Gluten-free count check
         gf_count = sum(1 for d in state if d.is_gluten_free)
         if gf_count < self.min_gluten_free:
             return False
 
-        # Vegan constraint
+        # 5. Vegan count check
         vegan_count = sum(1 for d in state if d.is_vegan)
         if vegan_count < self.min_vegan:
             return False
 
         return True
 
-    def actions(self, state: MenuState) -> List[Dish]:
-        """Available dishes for the next unfilled course slot."""
+    def actions(self, state):
+        """Returns candidates for the next unfilled course slot."""
         curr_idx = len(state)
         if curr_idx >= len(self.slots):
-            return []
+            return []  # All slots already filled
 
+        # What course are we picking next? (e.g., "starter", "main", or "dessert")
         target_category = self.slots[curr_idx].lower()
         candidates = self.category_map.get(target_category, [])
 
-        # Filter out already selected dishes to avoid duplicates
+        # Avoid choosing duplicate dishes
         selected_ids = {d.id for d in state}
         return [d for d in candidates if d.id not in selected_ids]
 
-    def result(self, state: MenuState, action: Dish) -> MenuState:
-        """Append chosen dish to the partial menu state."""
+    def result(self, state, action):
+        """Append the chosen dish to the current menu state."""
         return state + (action,)
 
-    def prune(self, state: MenuState) -> bool:
-        """Early constraint pruning hook.
-
-        Returns True to cut branch immediately if hard constraints cannot be satisfied.
-        """
-        # 1. Budget overrun pruning: If current partial cost already exceeds budget
+    def prune(self, state):
+        """Early pruning check: returns True to cut this branch immediately."""
+        # 1. Budget overrun: If current partial price already exceeds budget, stop!
         running_price = sum(d.price_per_head for d in state)
         if running_price > self.max_budget:
             return True
 
-        # 2. Dietary reachability pruning: If remaining slots cannot supply missing items
+        # 2. Dietary reachability: If remaining unfilled slots can't supply enough veg/gf dishes
         remaining_slots = len(self.slots) - len(state)
 
         veg_so_far = sum(1 for d in state if d.is_vegetarian or d.is_vegan)
@@ -131,17 +117,17 @@ class MenuConstraintProblem(Problem[MenuState, Dish]):
 
 
 def solve_menu_constraints(
-    slots: List[str],
-    dishes: List[Dict[str, Any]],
-    max_budget: float,
-    min_vegetarian: int = 0,
-    min_gluten_free: int = 0,
-    min_vegan: int = 0,
-    use_pruning: bool = True,
-    find_all: bool = False,
-    max_solutions: int = 3,
-) -> Dict[str, Any]:
-    """Helper entry point for API to execute DFS menu constraint solving."""
+    slots,
+    dishes,
+    max_budget,
+    min_vegetarian=0,
+    min_gluten_free=0,
+    min_vegan=0,
+    use_pruning=True,
+    find_all=False,
+    max_solutions=3,
+):
+    """Main helper called by the FastAPI router to solve menu package constraints via DFS."""
     dish_objs = [
         Dish(
             id=d.get("id", str(i)),
@@ -167,7 +153,7 @@ def solve_menu_constraints(
         min_vegan=min_vegan,
     )
 
-    res: SearchResult = depth_first_search(
+    res = depth_first_search(
         problem,
         use_pruning=use_pruning,
         find_all=find_all,
@@ -186,14 +172,14 @@ def solve_menu_constraints(
         }
 
     # Format solution packages
-    final_packages = []
     if find_all and "all_solutions" in res.metadata:
         paths = res.metadata["all_solutions"]
     else:
         paths = [res.solution_path]
 
+    final_packages = []
     for p in paths:
-        final_state: MenuState = p[-1]
+        final_state = p[-1]
         package_dishes = [
             {
                 "id": d.id,

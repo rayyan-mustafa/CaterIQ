@@ -4,70 +4,57 @@ Finds the minimum number of ingredient swaps required to make a dish
 safe from specified guest allergens.
 """
 
-from __future__ import annotations
 from dataclasses import dataclass
-from typing import Dict, FrozenSet, List, NamedTuple, Optional, Set, Tuple
 from ai_engine.search.core import Problem, SearchResult
 from ai_engine.search.bfs import breadth_first_search
 
 
-class SwapAction(NamedTuple):
-    """An ingredient substitution action."""
+class SwapAction:
+    """Represents swapping one ingredient for an alternative."""
 
-    replace_ingredient: str
-    with_ingredient: str
-    cost: float = 1.0
+    def __init__(self, replace_ingredient: str, with_ingredient: str, cost: float = 1.0):
+        self.replace_ingredient = replace_ingredient
+        self.with_ingredient = with_ingredient
+        self.cost = cost
 
-    def __repr__(self) -> str:
+    def __repr__(self):
         return f"Swap({self.replace_ingredient} -> {self.with_ingredient})"
 
 
-class AllergenSubstitutionProblem(Problem[FrozenSet[str], SwapAction]):
-    """Formal BFS problem for allergen substitution.
+class AllergenSubstitutionProblem(Problem):
+    """Formal BFS problem for ingredient allergen substitution.
 
-    State: frozenset of ingredient names present in the dish.
-    Action: SwapAction(from, to) replacing an unsafe or intermediate ingredient.
-    Goal: No ingredient in the state contains any of the target allergens.
+    State: frozenset of ingredients currently in the recipe.
+    Action: SwapAction(from, to) replacing an unsafe ingredient.
+    Goal: No ingredient in the state contains any target allergens.
     """
 
-    def __init__(
-        self,
-        initial_ingredients: Set[str],
-        ingredient_allergens: Dict[str, Set[str]],
-        allowed_substitutions: Dict[str, List[Tuple[str, float]]],
-        target_allergens: Set[str],
-    ) -> None:
-        """Initialize the allergen substitution problem.
-
-        Args:
-            initial_ingredients: Set of ingredient names initially in the dish.
-            ingredient_allergens: Map of ingredient name -> set of allergens it contains.
-            allowed_substitutions: Map of ingredient name -> list of (substitute_name, swap_cost).
-            target_allergens: Set of allergens to eliminate.
-        """
+    def __init__(self, initial_ingredients, ingredient_allergens, allowed_substitutions, target_allergens):
         self._initial = frozenset(initial_ingredients)
         self.ingredient_allergens = {k: set(v) for k, v in ingredient_allergens.items()}
         self.allowed_substitutions = allowed_substitutions
         self.target_allergens = set(target_allergens)
 
-    def initial_state(self) -> FrozenSet[str]:
+    def initial_state(self):
+        """Returns the initial recipe ingredients as a frozenset."""
         return self._initial
 
-    def is_goal(self, state: FrozenSet[str]) -> bool:
-        """Check if any ingredient in state has any target allergen."""
+    def is_goal(self, state):
+        """Returns True if none of the ingredients contain any target allergens."""
         for ing in state:
-            contained = self.ingredient_allergens.get(ing, set())
-            if not contained.isdisjoint(self.target_allergens):
+            allergens_in_ing = self.ingredient_allergens.get(ing, set())
+            # If the ingredient contains any target allergen, it's not safe
+            if not allergens_in_ing.isdisjoint(self.target_allergens):
                 return False
         return True
 
-    def actions(self, state: FrozenSet[str]) -> List[SwapAction]:
-        """Generate possible substitutions for unsafe ingredients."""
-        available_actions: List[SwapAction] = []
+    def actions(self, state):
+        """Returns valid substitution moves for unsafe ingredients."""
+        available_actions = []
         for ing in state:
-            contained = self.ingredient_allergens.get(ing, set())
-            # We prioritize substituting ingredients that actually carry a target allergen
-            if not contained.isdisjoint(self.target_allergens):
+            allergens_in_ing = self.ingredient_allergens.get(ing, set())
+            # Only swap ingredients that actually have a target allergen
+            if not allergens_in_ing.isdisjoint(self.target_allergens):
                 subs = self.allowed_substitutions.get(ing, [])
                 for sub, cost in subs:
                     available_actions.append(
@@ -75,53 +62,48 @@ class AllergenSubstitutionProblem(Problem[FrozenSet[str], SwapAction]):
                     )
         return available_actions
 
-    def result(self, state: FrozenSet[str], action: SwapAction) -> FrozenSet[str]:
-        """Apply the swap action to produce a new state."""
+    def result(self, state, action):
+        """Applies the swap to produce a new recipe ingredient set."""
         new_set = set(state)
         new_set.discard(action.replace_ingredient)
         new_set.add(action.with_ingredient)
         return frozenset(new_set)
 
-    def step_cost(
-        self,
-        state: FrozenSet[str],
-        action: SwapAction,
-        next_state: FrozenSet[str],
-    ) -> float:
-        return 1.0  # Unit cost: BFS minimizes number of ingredient changes
+    def step_cost(self, state, action, next_state):
+        """Unit cost: BFS finds the minimal number of substitutions."""
+        return 1.0
 
 
 @dataclass
 class SubstitutionSolution:
-    """Friendly output for API and UI presentation."""
-
+    """Clean response container for API and UI display."""
     found: bool
-    original_ingredients: List[str]
-    safe_ingredients: Optional[List[str]]
-    swaps_required: List[Dict[str, str]]
-    nodes_expanded: int
-    runtime_ms: float
+    original_ingredients: list
+    safe_ingredients: list = None
+    swaps_required: list = None
+    nodes_expanded: int = 0
+    runtime_ms: float = 0.0
     safety_disclaimer: str = (
         "Note: Allergen finder is an AI decision aid. Kitchen staff must verify all physical ingredient packaging."
     )
 
 
 def find_allergen_substitutions(
-    ingredients: List[str],
-    ingredient_allergens: Dict[str, List[str]],
-    allowed_substitutions: Dict[str, List[Tuple[str, float]]],
-    target_allergens: List[str],
-    max_depth: int = 5,
-) -> SubstitutionSolution:
-    """Helper entry point for API to execute BFS allergen substitution."""
+    ingredients,
+    ingredient_allergens,
+    allowed_substitutions,
+    target_allergens,
+    max_depth=5,
+):
+    """Main helper called by the FastAPI router to solve allergen substitution via BFS."""
     problem = AllergenSubstitutionProblem(
         initial_ingredients=set(ingredients),
-        ingredient_allergens={k: set(v) for k, v in ingredient_allergens.items()},
+        ingredient_allergens=ingredient_allergens,
         allowed_substitutions=allowed_substitutions,
         target_allergens=set(target_allergens),
     )
 
-    res: SearchResult = breadth_first_search(problem, max_depth=max_depth)
+    res = breadth_first_search(problem, max_depth=max_depth)
 
     if not res.found or res.solution_path is None:
         return SubstitutionSolution(
@@ -134,7 +116,7 @@ def find_allergen_substitutions(
         )
 
     final_state = res.solution_path[-1]
-    actions: List[SwapAction] = res.metadata.get("actions", [])
+    actions = res.metadata.get("actions", [])
     swaps = [
         {"from": a.replace_ingredient, "to": a.with_ingredient}
         for a in actions
