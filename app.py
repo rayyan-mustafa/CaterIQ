@@ -328,6 +328,13 @@ def navigate_and_run_bfs(event_id: str) -> None:
     st.session_state["nav_choice_key"] = "🔍 Module A: BFS Allergen Finder"
     st.session_state["active_event_id"] = event_id
     st.session_state["auto_run_bfs"] = True
+    ev = next((e for e in EVENTS if e["id"] == event_id), None)
+    if ev:
+        preset_title = f"{ev['title']} — {ev['client']} (Eliminate {', '.join(ev['target_allergens'])})"
+        st.session_state["bfs_preset_selector"] = preset_title
+        st.session_state["bfs_dish_selector"] = ev["requested_dish"]
+        st.session_state["bfs_target_allergens"] = [alg for alg in ev.get("target_allergens", []) if alg in ALLERGENS]
+        st.session_state["_last_bfs_preset"] = preset_title
 
 
 def navigate_and_run_dfs(event_id: str) -> None:
@@ -335,6 +342,14 @@ def navigate_and_run_dfs(event_id: str) -> None:
     st.session_state["nav_choice_key"] = "🧩 Module B: DFS Menu Solver"
     st.session_state["active_event_id"] = event_id
     st.session_state["auto_run_dfs"] = True
+    ev = next((e for e in EVENTS if e["id"] == event_id), None)
+    if ev:
+        preset_title = f"{ev['title']} — {ev['client']} (${ev['budget_per_head']:.0f}/head, {ev['guests']} guests)"
+        st.session_state["dfs_preset_selector"] = preset_title
+        st.session_state["dfs_budget_val"] = float(ev["budget_per_head"])
+        st.session_state["dfs_min_veg_val"] = int(ev["min_vegetarian"])
+        st.session_state["dfs_min_gf_val"] = int(ev["min_gluten_free"])
+        st.session_state["_last_dfs_preset"] = preset_title
 
 
 # ==============================================================================
@@ -456,12 +471,11 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
                     default_bfs_idx = idx
                     break
 
-        active_ev_key = st.session_state.get("active_event_id", "default")
         selected_bfs_preset = st.selectbox(
             "🎯 Client Event Demonstration Preset:",
             bfs_presets,
-            index=default_bfs_idx,
-            key=f"bfs_preset_{active_ev_key}",
+            index=default_bfs_idx if "bfs_preset_selector" not in st.session_state else None,
+            key="bfs_preset_selector",
             help="Pre-loads a confirmed catering booking and their specific dietary emergency.",
         )
 
@@ -470,6 +484,17 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
             ev_idx = bfs_presets.index(selected_bfs_preset) - 1
             active_bfs_event = EVENTS[ev_idx]
             st.session_state["active_event_id"] = active_bfs_event["id"]
+        else:
+            st.session_state["active_event_id"] = None
+
+        if st.session_state.get("_last_bfs_preset") != selected_bfs_preset:
+            st.session_state["_last_bfs_preset"] = selected_bfs_preset
+            if active_bfs_event:
+                if active_bfs_event.get("requested_dish") in list(RECIPES.keys()):
+                    st.session_state["bfs_dish_selector"] = active_bfs_event["requested_dish"]
+                st.session_state["bfs_alg_selector"] = [alg for alg in active_bfs_event.get("target_allergens", []) if alg in ALLERGENS]
+
+        if active_bfs_event:
             render_html(
                 f"""
                 <div class="callout-box" style="border-left-color: #f59e0b; margin: 10px 0 14px 0;">
@@ -487,7 +512,12 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
         if active_bfs_event and active_bfs_event.get("requested_dish") in dish_options:
             default_dish_idx = dish_options.index(active_bfs_event["requested_dish"])
 
-        selected_dish = st.selectbox("Choose a Recipe to Adapt:", dish_options, index=default_dish_idx, key=f"bfs_dish_{active_ev_key}")
+        selected_dish = st.selectbox(
+            "Choose a Recipe to Adapt:",
+            dish_options,
+            index=default_dish_idx if "bfs_dish_selector" not in st.session_state else None,
+            key="bfs_dish_selector",
+        )
         original_ingredients = RECIPES[selected_dish]
 
         render_html('<div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#94a3b8; margin:14px 0 6px 0;">Original Recipe Ingredients</div>')
@@ -508,8 +538,8 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
         target_allergens = st.multiselect(
             "Target Allergens to Eliminate:",
             options=ALLERGENS,
-            default=default_target_allergens,
-            key=f"bfs_alg_{active_ev_key}",
+            default=default_target_allergens if "bfs_alg_selector" not in st.session_state else None,
+            key="bfs_alg_selector",
         )
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -645,25 +675,42 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                     default_dfs_idx = idx
                     break
 
-        active_ev_key = st.session_state.get("active_event_id", "default")
         selected_dfs_preset = st.selectbox(
             "🎯 Client Event Demonstration Preset:",
             dfs_presets,
-            index=default_dfs_idx,
-            key=f"dfs_preset_{active_ev_key}",
+            index=default_dfs_idx if "dfs_preset_selector" not in st.session_state else None,
+            key="dfs_preset_selector",
             help="Pre-loads real client event constraints, headcount, and budget requirements.",
         )
-
-        default_budget = float(active_dfs_event["budget_per_head"]) if active_dfs_event else 44.0
-        default_min_veg = int(active_dfs_event["min_vegetarian"]) if active_dfs_event else 1
-        default_min_gf = int(active_dfs_event["min_gluten_free"]) if active_dfs_event else 1
 
         active_dfs_event = None
         if selected_dfs_preset != "Custom Constraints Sandbox":
             ev_idx = dfs_presets.index(selected_dfs_preset) - 1
             active_dfs_event = EVENTS[ev_idx]
             st.session_state["active_event_id"] = active_dfs_event["id"]
-            current_budget_val = float(st.session_state.get(f"dfs_budget_{active_ev_key}", default_budget))
+        else:
+            st.session_state["active_event_id"] = None
+
+        if st.session_state.get("_last_dfs_preset") != selected_dfs_preset:
+            st.session_state["_last_dfs_preset"] = selected_dfs_preset
+            if active_dfs_event:
+                st.session_state["dfs_budget_val"] = float(active_dfs_event["budget_per_head"])
+                st.session_state["dfs_min_veg_val"] = int(active_dfs_event["min_vegetarian"])
+                st.session_state["dfs_min_gf_val"] = int(active_dfs_event["min_gluten_free"])
+
+        default_budget = float(active_dfs_event["budget_per_head"]) if active_dfs_event else 44.0
+        default_min_veg = int(active_dfs_event["min_vegetarian"]) if active_dfs_event else 1
+        default_min_gf = int(active_dfs_event["min_gluten_free"]) if active_dfs_event else 1
+
+        if "dfs_budget_val" not in st.session_state:
+            st.session_state["dfs_budget_val"] = default_budget
+        if "dfs_min_veg_val" not in st.session_state:
+            st.session_state["dfs_min_veg_val"] = default_min_veg
+        if "dfs_min_gf_val" not in st.session_state:
+            st.session_state["dfs_min_gf_val"] = default_min_gf
+
+        if active_dfs_event:
+            current_budget_val = float(st.session_state.get("dfs_budget_val", default_budget))
             render_html(
                 f"""
                 <div class="callout-box" style="border-left-color: #6366f1; margin: 10px 0 14px 0;">
@@ -677,12 +724,12 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                 """
             )
 
-        budget = st.slider("Maximum Budget per Head ($):", min_value=25.0, max_value=85.0, value=default_budget, step=1.0, key=f"dfs_budget_{active_ev_key}")
-        min_veg = st.number_input("Minimum Vegetarian Dishes:", min_value=0, max_value=3, value=default_min_veg, key=f"dfs_veg_{active_ev_key}")
-        min_gf = st.number_input("Minimum Gluten-Free Dishes:", min_value=0, max_value=3, value=default_min_gf, key=f"dfs_gf_{active_ev_key}")
+        budget = st.slider("Maximum Budget per Head ($):", min_value=25.0, max_value=85.0, step=1.0, key="dfs_budget_val")
+        min_veg = st.number_input("Minimum Vegetarian Dishes:", min_value=0, max_value=3, key="dfs_min_veg_val")
+        min_gf = st.number_input("Minimum Gluten-Free Dishes:", min_value=0, max_value=3, key="dfs_min_gf_val")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        enable_pruning = st.checkbox("Enable Early Branch Pruning (Branch & Bound)", value=True, key=f"dfs_prune_{active_ev_key}")
+        enable_pruning = st.checkbox("Enable Early Branch Pruning (Branch & Bound)", value=True, key="dfs_prune_val")
 
         st.markdown("<br>", unsafe_allow_html=True)
         run_dfs = st.button("🚀 Run DFS Solver", use_container_width=True, type="primary")
@@ -767,11 +814,13 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                         f"Option {i+1} (${p['total_price_per_head']:.2f}/head) — {p['dishes'][0]['name']}, {p['dishes'][1]['name']}, {p['dishes'][2]['name']}"
                         for i, p in enumerate(active_res["packages"][:5])
                     ]
+                    if "dfs_pkg_selector" in st.session_state and st.session_state["dfs_pkg_selector"] >= len(pkg_labels):
+                        st.session_state["dfs_pkg_selector"] = 0
                     selected_pkg_idx = st.selectbox(
                         "📦 Feasible Package Variants Discovered by DFS:",
                         range(len(pkg_labels)),
                         format_func=lambda i: pkg_labels[i],
-                        key=f"pkg_sel_{active_ev_key}_{int(budget)}",
+                        key="dfs_pkg_selector",
                         help="DFS explored the state space and found multiple compliant 3-course packages under budget."
                     )
                 pkg = active_res["packages"][selected_pkg_idx]
