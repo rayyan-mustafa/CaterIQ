@@ -32,6 +32,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
+def render_html(html_str: str) -> None:
+    """Safely render HTML in Streamlit without triggering Markdown code blocks."""
+    clean = " ".join(line.strip() for line in html_str.strip().splitlines() if line.strip())
+    st.markdown(clean, unsafe_allow_html=True)
+
+
 # ==============================================================================
 # NEXT.JS TAILWIND DARK-MODE DESIGN SYSTEM (CSS INJECTION)
 # ==============================================================================
@@ -312,11 +319,26 @@ if "nav_choice_key" not in st.session_state:
 if "active_event_id" not in st.session_state:
     st.session_state["active_event_id"] = None
 
+
+def navigate_and_run_bfs(event_id: str) -> None:
+    """Callback to switch to Module A and automatically trigger BFS search."""
+    st.session_state["nav_choice_key"] = "🔍 Module A: BFS Allergen Finder"
+    st.session_state["active_event_id"] = event_id
+    st.session_state["auto_run_bfs"] = True
+
+
+def navigate_and_run_dfs(event_id: str) -> None:
+    """Callback to switch to Module B and automatically trigger DFS menu solver."""
+    st.session_state["nav_choice_key"] = "🧩 Module B: DFS Menu Solver"
+    st.session_state["active_event_id"] = event_id
+    st.session_state["auto_run_dfs"] = True
+
+
 # ==============================================================================
 # SIDEBAR (NEXT.JS BRANDED)
 # ==============================================================================
 with st.sidebar:
-    st.markdown(
+    render_html(
         """
         <div style="display:flex; align-items:center; gap:12px; margin-bottom: 16px;">
             <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); width: 38px; height: 38px; border-radius: 10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:20px; color:#ffffff; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);">
@@ -327,11 +349,10 @@ with st.sidebar:
                 <div style="font-size: 11px; color: #818cf8; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">AI Search Studio</div>
             </div>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    st.markdown('<div style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin: 16px 0 8px 4px;">Navigation</div>', unsafe_allow_html=True)
+    render_html('<div style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin: 16px 0 8px 4px;">Navigation</div>')
 
     nav_choice = st.radio(
         "Navigation",
@@ -399,7 +420,9 @@ st.markdown(
 # TAB 1: BFS ALLERGEN FINDER (MODULE A - LAB 04)
 # ==============================================================================
 if nav_choice == "🔍 Module A: BFS Allergen Finder":
-    st.markdown(
+    auto_run_bfs = st.session_state.pop("auto_run_bfs", False)
+
+    render_html(
         """
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
             <div>
@@ -408,15 +431,14 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
             </div>
             <span class="badge badge-indigo">Lab 04: BFS</span>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     col1, col2 = st.columns([1, 1.4], gap="large")
 
     with col1:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:12px;">1. Client Event &amp; Recipe Parameters</div>', unsafe_allow_html=True)
+        render_html('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:12px;">1. Client Event &amp; Recipe Parameters</div>')
 
         # Event Demonstration Preset Dropdown
         bfs_presets = ["Custom Recipe Sandbox"] + [
@@ -431,10 +453,12 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
                     default_bfs_idx = idx
                     break
 
+        active_ev_key = st.session_state.get("active_event_id", "default")
         selected_bfs_preset = st.selectbox(
             "🎯 Client Event Demonstration Preset:",
             bfs_presets,
             index=default_bfs_idx,
+            key=f"bfs_preset_{active_ev_key}",
             help="Pre-loads a confirmed catering booking and their specific dietary emergency.",
         )
 
@@ -443,7 +467,7 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
             ev_idx = bfs_presets.index(selected_bfs_preset) - 1
             active_bfs_event = EVENTS[ev_idx]
             st.session_state["active_event_id"] = active_bfs_event["id"]
-            st.markdown(
+            render_html(
                 f"""
                 <div class="callout-box" style="border-left-color: #f59e0b; margin: 10px 0 14px 0;">
                     <div style="font-size:10px; font-weight:800; color:#f59e0b; text-transform:uppercase; letter-spacing:0.05em;">Client Event Binding Active</div>
@@ -452,8 +476,7 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
                         ⚠️ <strong>Case</strong>: {active_bfs_event['allergy_context']}. Target: <span style="color:#f87171; font-weight:700;">{", ".join(active_bfs_event['target_allergens'])}</span>.
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True,
+                """
             )
 
         dish_options = list(RECIPES.keys())
@@ -461,17 +484,17 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
         if active_bfs_event and active_bfs_event.get("requested_dish") in dish_options:
             default_dish_idx = dish_options.index(active_bfs_event["requested_dish"])
 
-        selected_dish = st.selectbox("Choose a Recipe to Adapt:", dish_options, index=default_dish_idx)
+        selected_dish = st.selectbox("Choose a Recipe to Adapt:", dish_options, index=default_dish_idx, key=f"bfs_dish_{active_ev_key}")
         original_ingredients = RECIPES[selected_dish]
 
-        st.markdown('<div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#94a3b8; margin:14px 0 6px 0;">Original Recipe Ingredients</div>', unsafe_allow_html=True)
+        render_html('<div style="font-size:11px; font-weight:700; text-transform:uppercase; color:#94a3b8; margin:14px 0 6px 0;">Original Recipe Ingredients</div>')
         for ing in original_ingredients:
             alg_tags = INGREDIENT_ALLERGENS.get(ing, set())
             if alg_tags:
                 badge_html = f'<span class="badge badge-amber">⚠️ {", ".join(alg_tags)}</span>'
             else:
                 badge_html = '<span class="badge badge-emerald">Safe</span>'
-            st.markdown(f'<div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0; border-bottom:1px solid #1e293b; font-size:13px; color:#f8fafc;"><span>{ing}</span>{badge_html}</div>', unsafe_allow_html=True)
+            render_html(f'<div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0; border-bottom:1px solid #1e293b; font-size:13px; color:#f8fafc;"><span>{ing}</span>{badge_html}</div>')
 
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -483,6 +506,7 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
             "Target Allergens to Eliminate:",
             options=ALLERGENS,
             default=default_target_allergens,
+            key=f"bfs_alg_{active_ev_key}",
         )
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -491,9 +515,9 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
 
     with col2:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:14px;">2. Search Exploration Results</div>', unsafe_allow_html=True)
+        render_html('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:14px;">2. Search Exploration Results</div>')
 
-        if run_bfs:
+        if run_bfs or auto_run_bfs:
             if not target_allergens:
                 st.warning("Please select at least one allergen to eliminate.")
             else:
@@ -509,23 +533,23 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
                 with m1:
                     status_color = "#34d399" if result.found else "#f87171"
                     status_text = "FOUND" if result.found else "NO PATH"
-                    st.markdown(f'<div class="metric-box"><div class="metric-box-lbl">Goal Test</div><div class="metric-box-val" style="color:{status_color};">{status_text}</div></div>', unsafe_allow_html=True)
+                    render_html(f'<div class="metric-box"><div class="metric-box-lbl">Goal Test</div><div class="metric-box-val" style="color:{status_color};">{status_text}</div></div>')
                 with m2:
-                    st.markdown(f'<div class="metric-box"><div class="metric-box-lbl">Swaps Needed</div><div class="metric-box-val" style="color:#a78bfa;">{len(result.swaps_required)}</div></div>', unsafe_allow_html=True)
+                    render_html(f'<div class="metric-box"><div class="metric-box-lbl">Swaps Needed</div><div class="metric-box-val" style="color:#a78bfa;">{len(result.swaps_required)}</div></div>')
                 with m3:
-                    st.markdown(f'<div class="metric-box"><div class="metric-box-lbl">Nodes Expanded</div><div class="metric-box-val" style="color:#38bdf8;">{result.nodes_expanded}</div></div>', unsafe_allow_html=True)
+                    render_html(f'<div class="metric-box"><div class="metric-box-lbl">Nodes Expanded</div><div class="metric-box-val" style="color:#38bdf8;">{result.nodes_expanded}</div></div>')
                 with m4:
-                    st.markdown(f'<div class="metric-box"><div class="metric-box-lbl">Search Time</div><div class="metric-box-val" style="color:#fbbf24;">{result.runtime_ms:.2f}ms</div></div>', unsafe_allow_html=True)
+                    render_html(f'<div class="metric-box"><div class="metric-box-lbl">Search Time</div><div class="metric-box-val" style="color:#fbbf24;">{result.runtime_ms:.2f}ms</div></div>')
 
                 st.markdown("<br>", unsafe_allow_html=True)
 
                 if result.found:
-                    st.markdown('<div class="callout-success"><strong>✅ Optimal Path Found</strong>: BFS verified the shallowest safe substitution state in the graph.</div>', unsafe_allow_html=True)
+                    render_html('<div class="callout-success"><strong>✅ Optimal Path Found</strong>: BFS verified the shallowest safe substitution state in the graph.</div>')
 
                     if result.swaps_required:
-                        st.markdown('<div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#94a3b8; margin: 12px 0 6px 0;">Substitutions Applied</div>', unsafe_allow_html=True)
+                        render_html('<div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#94a3b8; margin: 12px 0 6px 0;">Substitutions Applied</div>')
                         for i, swap in enumerate(result.swaps_required, 1):
-                            st.markdown(
+                            render_html(
                                 f"""
                                 <div style="display:flex; align-items:center; gap:10px; background:#090d16; border:1px solid #1e293b; padding:10px 14px; border-radius:10px; margin-bottom:8px; font-size:13px;">
                                     <span style="color:#818cf8; font-weight:700;">Step {i}:</span>
@@ -533,21 +557,20 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
                                     <span style="color:#94a3b8;">&rarr;</span>
                                     <span style="color:#10b981; font-weight:700;">{swap['to']}</span>
                                 </div>
-                                """,
-                                unsafe_allow_html=True,
+                                """
                             )
                     else:
-                        st.markdown('<div class="callout-box">Recipe has no target allergens! Zero swaps required.</div>', unsafe_allow_html=True)
+                        render_html('<div class="callout-box">Recipe has no target allergens! Zero swaps required.</div>')
 
-                    st.markdown('<div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#94a3b8; margin: 16px 0 8px 0;">Final Safe Recipe</div>', unsafe_allow_html=True)
+                    render_html('<div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#94a3b8; margin: 16px 0 8px 0;">Final Safe Recipe</div>')
                     cols = st.columns(2)
                     for idx, safe_ing in enumerate(result.safe_ingredients):
                         with cols[idx % 2]:
-                            st.markdown(f'<div style="background:#090d16; border:1px solid #1e293b; padding:8px 12px; border-radius:8px; font-size:12px; color:#f8fafc; margin-bottom:6px;">✔️ <strong>{safe_ing}</strong></div>', unsafe_allow_html=True)
+                            render_html(f'<div style="background:#090d16; border:1px solid #1e293b; padding:8px 12px; border-radius:8px; font-size:12px; color:#f8fafc; margin-bottom:6px;">✔️ <strong>{safe_ing}</strong></div>')
 
                     # Real-World Client Safety Clearance
                     if active_bfs_event:
-                        st.markdown(
+                        render_html(
                             f"""
                             <div class="quotation-box">
                                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
@@ -563,21 +586,19 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
                                     Eliminated: <span style="color:#f87171; font-weight:700;">{", ".join(target_allergens)}</span> &bull; Status: Zero Cross-Contamination Risk.
                                 </div>
                             </div>
-                            """,
-                            unsafe_allow_html=True,
+                            """
                         )
                 else:
-                    st.markdown('<div class="callout-box" style="border-left-color:#ef4444; color:#fca5a5;">❌ Search Exhausted: No substitution sequence in the graph can eliminate all specified allergens.</div>', unsafe_allow_html=True)
+                    render_html('<div class="callout-box" style="border-left-color:#ef4444; color:#fca5a5;">❌ Search Exhausted: No substitution sequence in the graph can eliminate all specified allergens.</div>')
         else:
-            st.markdown(
+            render_html(
                 """
                 <div style="text-align:center; padding: 40px 20px; color:#64748b;">
                     <div style="font-size:32px; margin-bottom:8px;">🔍</div>
                     <div style="font-size:14px; font-weight:600; color:#94a3b8;">Ready for Search Execution</div>
                     <div style="font-size:12px;">Select client event or recipe on the left and click <strong>Run BFS Search</strong>.</div>
                 </div>
-                """,
-                unsafe_allow_html=True,
+                """
             )
 
         st.markdown('</div>', unsafe_allow_html=True)
@@ -587,7 +608,9 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
 # TAB 2: DFS MENU CONSTRAINT SOLVER (MODULE B - LAB 05)
 # ==============================================================================
 elif nav_choice == "🧩 Module B: DFS Menu Solver":
-    st.markdown(
+    auto_run_dfs = st.session_state.pop("auto_run_dfs", False)
+
+    render_html(
         """
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
             <div>
@@ -596,15 +619,14 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
             </div>
             <span class="badge badge-amber">Lab 05: DFS</span>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     col1, col2 = st.columns([1, 1.4], gap="large")
 
     with col1:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:12px;">1. Client Event &amp; Budget Constraints</div>', unsafe_allow_html=True)
+        render_html('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:12px;">1. Client Event &amp; Budget Constraints</div>')
 
         # Event Demonstration Preset Dropdown
         dfs_presets = ["Custom Constraints Sandbox"] + [
@@ -619,10 +641,12 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                     default_dfs_idx = idx
                     break
 
+        active_ev_key = st.session_state.get("active_event_id", "default")
         selected_dfs_preset = st.selectbox(
             "🎯 Client Event Demonstration Preset:",
             dfs_presets,
             index=default_dfs_idx,
+            key=f"dfs_preset_{active_ev_key}",
             help="Pre-loads real client event constraints, headcount, and budget requirements.",
         )
 
@@ -631,7 +655,7 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
             ev_idx = dfs_presets.index(selected_dfs_preset) - 1
             active_dfs_event = EVENTS[ev_idx]
             st.session_state["active_event_id"] = active_dfs_event["id"]
-            st.markdown(
+            render_html(
                 f"""
                 <div class="callout-box" style="border-left-color: #6366f1; margin: 10px 0 14px 0;">
                     <div style="font-size:10px; font-weight:800; color:#818cf8; text-transform:uppercase; letter-spacing:0.05em;">Live Client Contract Active</div>
@@ -641,20 +665,19 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                         💰 <strong>Budget Cap</strong>: <span style="color:#34d399; font-weight:700;">${active_dfs_event['budget_per_head']:.2f}/head</span>
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True,
+                """
             )
 
         default_budget = float(active_dfs_event["budget_per_head"]) if active_dfs_event else 44.0
         default_min_veg = int(active_dfs_event["min_vegetarian"]) if active_dfs_event else 1
         default_min_gf = int(active_dfs_event["min_gluten_free"]) if active_dfs_event else 1
 
-        budget = st.slider("Maximum Budget per Head ($):", min_value=25.0, max_value=65.0, value=default_budget, step=1.0)
-        min_veg = st.number_input("Minimum Vegetarian Dishes:", min_value=0, max_value=3, value=default_min_veg)
-        min_gf = st.number_input("Minimum Gluten-Free Dishes:", min_value=0, max_value=3, value=default_min_gf)
+        budget = st.slider("Maximum Budget per Head ($):", min_value=25.0, max_value=65.0, value=default_budget, step=1.0, key=f"dfs_budget_{active_ev_key}")
+        min_veg = st.number_input("Minimum Vegetarian Dishes:", min_value=0, max_value=3, value=default_min_veg, key=f"dfs_veg_{active_ev_key}")
+        min_gf = st.number_input("Minimum Gluten-Free Dishes:", min_value=0, max_value=3, value=default_min_gf, key=f"dfs_gf_{active_ev_key}")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        enable_pruning = st.checkbox("Enable Early Branch Pruning (Branch & Bound)", value=True)
+        enable_pruning = st.checkbox("Enable Early Branch Pruning (Branch & Bound)", value=True, key=f"dfs_prune_{active_ev_key}")
 
         st.markdown("<br>", unsafe_allow_html=True)
         run_dfs = st.button("🚀 Run DFS Solver", use_container_width=True, type="primary")
@@ -662,9 +685,9 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
 
     with col2:
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:14px;">2. Solver Results &amp; Client Quotation</div>', unsafe_allow_html=True)
+        render_html('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:14px;">2. Solver Results &amp; Client Quotation</div>')
 
-        if run_dfs:
+        if run_dfs or auto_run_dfs:
             slots = ["starter", "main", "dessert"]
 
             # Run with and without pruning to show benchmark proof to the instructor
@@ -693,20 +716,20 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
             with m1:
                 status_color = "#34d399" if active_res["found"] else "#f87171"
                 status_text = "FEASIBLE" if active_res["found"] else "FAILED"
-                st.markdown(f'<div class="metric-box"><div class="metric-box-lbl">Goal Test</div><div class="metric-box-val" style="color:{status_color};">{status_text}</div></div>', unsafe_allow_html=True)
+                render_html(f'<div class="metric-box"><div class="metric-box-lbl">Goal Test</div><div class="metric-box-val" style="color:{status_color};">{status_text}</div></div>')
             with m2:
                 prune_status = "ENABLED" if enable_pruning else "DISABLED"
-                st.markdown(f'<div class="metric-box"><div class="metric-box-lbl">Pruning</div><div class="metric-box-val" style="color:#a78bfa; font-size:18px; margin-top:8px;">{prune_status}</div></div>', unsafe_allow_html=True)
+                render_html(f'<div class="metric-box"><div class="metric-box-lbl">Pruning</div><div class="metric-box-val" style="color:#a78bfa; font-size:18px; margin-top:8px;">{prune_status}</div></div>')
             with m3:
-                st.markdown(f'<div class="metric-box"><div class="metric-box-lbl">Nodes Expanded</div><div class="metric-box-val" style="color:#38bdf8;">{active_res["nodes_expanded"]}</div></div>', unsafe_allow_html=True)
+                render_html(f'<div class="metric-box"><div class="metric-box-lbl">Nodes Expanded</div><div class="metric-box-val" style="color:#38bdf8;">{active_res["nodes_expanded"]}</div></div>')
             with m4:
-                st.markdown(f'<div class="metric-box"><div class="metric-box-lbl">Runtime</div><div class="metric-box-val" style="color:#fbbf24;">{active_res["runtime_ms"]:.2f}ms</div></div>', unsafe_allow_html=True)
+                render_html(f'<div class="metric-box"><div class="metric-box-lbl">Runtime</div><div class="metric-box-val" style="color:#fbbf24;">{active_res["runtime_ms"]:.2f}ms</div></div>')
 
             st.markdown("<br>", unsafe_allow_html=True)
 
             # Pruning Effectiveness Comparison Box
             nodes_saved = res_plain['nodes_expanded'] - res_pruned['nodes_expanded']
-            st.markdown(
+            render_html(
                 f"""
                 <div style="background:#090d16; border:1px solid #1e293b; border-radius:12px; padding:14px 18px; margin-bottom:14px;">
                     <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:#94a3b8; letter-spacing:0.05em; margin-bottom:8px;">Search Tree Pruning Comparison</div>
@@ -718,8 +741,7 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                         <span class="badge badge-emerald" style="font-size:12px; padding:6px 12px;">✂️ Saved {nodes_saved} Nodes</span>
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True,
+                """
             )
 
             if active_res["found"]:
@@ -730,17 +752,16 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                 budget_cap_total = budget * guest_count
                 contract_savings = max(0.0, budget_cap_total - total_contract_cost)
 
-                st.markdown(
+                render_html(
                     f"""
                     <div class="callout-success">
                         <strong>Package Selected</strong> &bull; Total Price: <strong>${pkg['total_price_per_head']:.2f}</strong> (Budget Limit: ${budget:.2f})
                     </div>
-                    """,
-                    unsafe_allow_html=True,
+                    """
                 )
 
                 # Real-World Catering Quotation & Delivery Box
-                st.markdown(
+                render_html(
                     f"""
                     <div class="quotation-box">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -769,11 +790,10 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                             <span style="color:#34d399; font-weight:700;">💰 Client Saves: ${contract_savings:,.2f}</span>
                         </div>
                     </div>
-                    """,
-                    unsafe_allow_html=True,
+                    """
                 )
 
-                st.markdown('<div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#94a3b8; margin: 16px 0 6px 0;">Selected 3-Course Menu</div>', unsafe_allow_html=True)
+                render_html('<div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#94a3b8; margin: 16px 0 6px 0;">Selected 3-Course Menu</div>')
                 for d in pkg["dishes"]:
                     tags = []
                     if d.get("is_vegetarian"): tags.append("Vegetarian")
@@ -781,7 +801,7 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                     tag_str = " &bull; ".join(tags)
                     tag_badge = f'<span class="badge badge-indigo">{tag_str}</span>' if tag_str else ""
 
-                    st.markdown(
+                    render_html(
                         f"""
                         <div style="display:flex; justify-content:space-between; align-items:center; background:#090d16; border:1px solid #1e293b; padding:12px 16px; border-radius:10px; margin-bottom:8px;">
                             <div>
@@ -793,21 +813,19 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                                 {tag_badge}
                             </div>
                         </div>
-                        """,
-                        unsafe_allow_html=True,
+                        """
                     )
             else:
-                st.markdown('<div class="callout-box" style="border-left-color:#ef4444; color:#fca5a5;">❌ Constraint Failure: No 3-course combination satisfies all budget and dietary requirements.</div>', unsafe_allow_html=True)
+                render_html('<div class="callout-box" style="border-left-color:#ef4444; color:#fca5a5;">❌ Constraint Failure: No 3-course combination satisfies all budget and dietary requirements.</div>')
         else:
-            st.markdown(
+            render_html(
                 """
                 <div style="text-align:center; padding: 40px 20px; color:#64748b;">
                     <div style="font-size:32px; margin-bottom:8px;">🧩</div>
                     <div style="font-size:14px; font-weight:600; color:#94a3b8;">Awaiting Constraints Configuration</div>
                     <div style="font-size:12px;">Select a client booking on the left and click <strong>Run DFS Solver</strong>.</div>
                 </div>
-                """,
-                unsafe_allow_html=True,
+                """
             )
 
         st.markdown('</div>', unsafe_allow_html=True)
@@ -817,7 +835,7 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
 # TAB 3: EVENTS & CATERING REQUESTS (CONNECTED LIVE TO DFS & BFS)
 # ==============================================================================
 elif nav_choice == "📋 Events & Dietary Requests":
-    st.markdown(
+    render_html(
         """
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
             <div>
@@ -826,14 +844,13 @@ elif nav_choice == "📋 Events & Dietary Requests":
             </div>
             <span class="badge badge-indigo">Week 2-3 Domain State</span>
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     for ev in EVENTS:
-        st.markdown(
+        render_html(
             f"""
-            <div class="glass-card" style="margin-bottom:16px; padding:20px 24px;">
+            <div class="glass-card" style="margin-bottom:14px; padding:20px 24px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <div>
                         <h3 style="margin:0; font-size:17px; font-weight:800; color:#ffffff;">{ev['title']}</h3>
@@ -863,32 +880,39 @@ elif nav_choice == "📋 Events & Dietary Requests":
                     </div>
                 </div>
 
-                <div style="background:#090d16; border:1px solid #1e293b; border-left:3px solid #facc15; padding:10px 14px; border-radius:8px; font-size:12px; color:#fde047; margin-bottom:14px;">
+                <div style="background:#090d16; border:1px solid #1e293b; border-left:3px solid #facc15; padding:10px 14px; border-radius:8px; font-size:12px; color:#fde047; margin-bottom:6px;">
                     ⚠️ <strong>Client Context</strong>: {ev['allergy_context']}. {ev['notes']}
                 </div>
-            """,
-            unsafe_allow_html=True,
+            </div>
+            """
         )
 
         # Action Buttons Row
         btn_c1, btn_c2 = st.columns(2)
         with btn_c1:
-            if st.button(f"🧩 Solve Menu with DFS for {ev['client']}", key=f"btn_dfs_{ev['id']}", type="primary", use_container_width=True):
-                st.session_state["active_event_id"] = ev["id"]
-                st.session_state["nav_choice_key"] = "🧩 Module B: DFS Menu Solver"
-                st.rerun()
+            st.button(
+                f"🧩 Solve Menu with DFS for {ev['client']}",
+                key=f"btn_dfs_{ev['id']}",
+                type="primary",
+                use_container_width=True,
+                on_click=navigate_and_run_dfs,
+                args=(ev["id"],),
+            )
 
         with btn_c2:
-            if st.button(f"🔍 Adapt '{ev['requested_dish']}' with BFS", key=f"btn_bfs_{ev['id']}", use_container_width=True):
-                st.session_state["active_event_id"] = ev["id"]
-                st.session_state["nav_choice_key"] = "🔍 Module A: BFS Allergen Finder"
-                st.rerun()
+            st.button(
+                f"🔍 Adapt '{ev['requested_dish']}' with BFS",
+                key=f"btn_bfs_{ev['id']}",
+                use_container_width=True,
+                on_click=navigate_and_run_bfs,
+                args=(ev["id"],),
+            )
 
         # One-Click Live AI Delivery Simulation inside each event card
         with st.expander(f"⚡ Live AI Delivery Simulation for {ev['client']} (Instant Evaluation)"):
             exp_c1, exp_c2 = st.columns(2)
             with exp_c1:
-                st.markdown('<div style="font-size:12px; font-weight:800; color:#818cf8; text-transform:uppercase; margin-bottom:6px;">DFS Menu Delivery Result</div>', unsafe_allow_html=True)
+                render_html('<div style="font-size:12px; font-weight:800; color:#818cf8; text-transform:uppercase; margin-bottom:6px;">DFS Menu Delivery Result</div>')
                 quick_dfs = solve_menu_constraints(
                     slots=["starter", "main", "dessert"],
                     dishes=DISH_CATALOG,
@@ -900,21 +924,20 @@ elif nav_choice == "📋 Events & Dietary Requests":
                 if quick_dfs["found"]:
                     q_pkg = quick_dfs["packages"][0]
                     q_total = q_pkg["total_price_per_head"] * ev["guests"]
-                    st.markdown(
+                    render_html(
                         f"""
                         <div style="background:#030712; border:1px solid #10b981; border-radius:8px; padding:10px 14px; font-size:12px;">
                             <div style="color:#34d399; font-weight:700;">✅ Feasible 3-Course Package Found</div>
                             <div style="color:#ffffff; margin:4px 0;">&bull; {', '.join([d['name'] for d in q_pkg['dishes']])}</div>
                             <div style="color:#cbd5e1;">Price: <strong>${q_pkg['total_price_per_head']:.2f}/head</strong> &bull; Total: <strong style="color:#34d399;">${q_total:,.2f}</strong> for {ev['guests']} guests</div>
                         </div>
-                        """,
-                        unsafe_allow_html=True,
+                        """
                     )
                 else:
-                    st.markdown('<div style="color:#f87171; font-size:12px;">❌ No package fits all constraints under budget.</div>', unsafe_allow_html=True)
+                    render_html('<div style="color:#f87171; font-size:12px;">❌ No package fits all constraints under budget.</div>')
 
             with exp_c2:
-                st.markdown('<div style="font-size:12px; font-weight:800; color:#f59e0b; text-transform:uppercase; margin-bottom:6px;">BFS Allergen Adaptation</div>', unsafe_allow_html=True)
+                render_html('<div style="font-size:12px; font-weight:800; color:#f59e0b; text-transform:uppercase; margin-bottom:6px;">BFS Allergen Adaptation</div>')
                 dish_ing = RECIPES.get(ev["requested_dish"], [])
                 quick_bfs = find_allergen_substitutions(
                     ingredients=dish_ing,
@@ -924,20 +947,19 @@ elif nav_choice == "📋 Events & Dietary Requests":
                 )
                 if quick_bfs.found:
                     swaps_desc = ", ".join([f"{s['from']} → {s['to']}" for s in quick_bfs.swaps_required]) if quick_bfs.swaps_required else "Already safe"
-                    st.markdown(
+                    render_html(
                         f"""
                         <div style="background:#030712; border:1px solid #10b981; border-radius:8px; padding:10px 14px; font-size:12px;">
                             <div style="color:#34d399; font-weight:700;">🛡️ Safe Recipe Verified: {ev['requested_dish']}</div>
                             <div style="color:#ffffff; margin:4px 0;">Swaps: <strong style="color:#38bdf8;">{swaps_desc}</strong></div>
                             <div style="color:#cbd5e1;">Nodes expanded: {quick_bfs.nodes_expanded} &bull; Runtime: {quick_bfs.runtime_ms:.2f}ms</div>
                         </div>
-                        """,
-                        unsafe_allow_html=True,
+                        """
                     )
                 else:
-                    st.markdown('<div style="color:#f87171; font-size:12px;">❌ No substitution path exists for this allergen.</div>', unsafe_allow_html=True)
+                    render_html('<div style="color:#f87171; font-size:12px;">❌ No substitution path exists for this allergen.</div>')
 
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("<div style='margin-bottom:24px;'></div>", unsafe_allow_html=True)
 
 
 
