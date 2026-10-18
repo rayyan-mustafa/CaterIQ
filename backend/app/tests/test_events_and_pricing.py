@@ -73,26 +73,9 @@ class TestEventsAndPricing(unittest.TestCase):
         # 5. Public client approves proposal
         appr_res = client.post(f"/api/v1/p/{token}/approve")
         self.assertEqual(appr_res.status_code, 200)
-        inv_id = appr_res.json()["invoice_id"]
-
-        # 6. Test Payment and Idempotency
-        evt_key = f"evt_test_{uuid.uuid4().hex[:10]}"
-        wh_payload = {
-            "id": evt_key,
-            "type": "checkout.session.completed",
-            "data": {"object": {"metadata": {"invoice_id": inv_id}}},
-        }
-
-        # First webhook call: should process
-        wh1 = client.post("/api/v1/webhooks/stripe", json=wh_payload)
-        self.assertEqual(wh1.status_code, 200)
-        self.assertEqual(wh1.json()["status"], "processed")
-
-        # Replaying identical webhook: must be recognized as already processed
-        wh2 = client.post("/api/v1/webhooks/stripe", json=wh_payload)
-        self.assertEqual(wh2.status_code, 200)
-        self.assertEqual(wh2.json()["result"]["status"], "already_processed")
+        self.assertIn("invoice_id", appr_res.json())
 
 
 if __name__ == "__main__":
     unittest.main()
+

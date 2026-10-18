@@ -1,12 +1,8 @@
-"""Integration tests for all 4 AI problem modules and benchmark runner."""
+"""Integration tests for Week 1-5 AI problem modules (BFS & DFS)."""
 
 import unittest
 from ai_engine.problems.allergen_substitution import find_allergen_substitutions
 from ai_engine.problems.menu_constraints import solve_menu_constraints
-from ai_engine.problems.menu_optimizer import optimize_menu_package
-from ai_engine.problems.delivery_routing import compare_route_algorithms
-from ai_engine.problems.bid_pricing import advise_bid_pricing
-from ai_engine.benchmarks.runner import run_all_benchmarks
 
 
 class TestProblems(unittest.TestCase):
@@ -82,67 +78,7 @@ class TestProblems(unittest.TestCase):
         )
         self.assertLessEqual(res["nodes_expanded"], res_plain["nodes_expanded"])
 
-    def test_menu_optimizer_module(self):
-        slots = ["starter", "main"]
-        dishes = [
-            {"id": "1", "name": "Soup", "category": "starter", "price_per_head": 7.0, "popularity_score": 0.8},
-            {"id": "2", "name": "Salad", "category": "starter", "price_per_head": 12.0, "popularity_score": 0.5},
-            {"id": "3", "name": "Pasta", "category": "main", "price_per_head": 15.0, "popularity_score": 0.9},
-            {"id": "4", "name": "Chicken", "category": "main", "price_per_head": 20.0, "popularity_score": 0.7},
-        ]
-
-        res = optimize_menu_package(
-            slots=slots,
-            dishes=dishes,
-            max_budget=30.0,
-            appeal_weight=5.0,
-        )
-        self.assertTrue(res["found"])
-        self.assertEqual(len(res["dishes"]), 2)
-        names = [d["name"] for d in res["dishes"]]
-        self.assertIn("Soup", names)
-        self.assertIn("Pasta", names)
-
-    def test_delivery_routing_module(self):
-        coords = {
-            "A": (40.71, -74.00),
-            "B": (40.73, -73.99),
-            "C": (40.75, -73.98),
-        }
-        edges = {
-            "A": [("B", 10.0)],
-            "B": [("C", 15.0)],
-            "C": [],
-        }
-        res = compare_route_algorithms(start="A", goal="C", coordinates=coords, edges=edges)
-        self.assertTrue(res["astar"]["found"])
-        self.assertEqual(res["astar"]["total_minutes"], 25.0)
-        self.assertTrue(res["greedy"]["found"])
-        self.assertLessEqual(res["astar"]["total_minutes"], res["greedy"]["total_minutes"])
-
-    def test_bid_pricing_module(self):
-        res = advise_bid_pricing(
-            base_price=50.0,
-            our_cost=30.0,
-            headcount=100,
-            competitor_est_price=48.0,
-            competitor_est_cost=32.0,
-            our_rating=4.9,
-            competitor_rating=4.3,
-            max_rounds=2,
-        )
-        self.assertGreaterEqual(res["recommended_price_per_head"], 30.0)
-        self.assertGreaterEqual(res["expected_total_profit"], 0.0)
-        self.assertTrue(res["verification"]["values_match"])
-        self.assertLessEqual(res["alpha_beta"]["nodes_evaluated"], res["minimax"]["nodes_evaluated"])
-
-    def test_benchmarks_runner(self):
-        bench_data = run_all_benchmarks()
-        self.assertIn("bfs_vs_dfs", bench_data)
-        self.assertIn("dfs_plain_vs_pruned", bench_data)
-        self.assertIn("greedy_vs_astar", bench_data)
-        self.assertIn("minimax_vs_alphabeta", bench_data)
-
 
 if __name__ == "__main__":
     unittest.main()
+

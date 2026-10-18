@@ -30,13 +30,6 @@ export default function Sidebar() {
   const aiLinks = [
     { label: "BFS: Allergen Finder", href: "/ai/allergen", icon: ShieldAlert, badge: "BFS" },
     { label: "DFS: Menu Constraints", href: "/ai/constraints", icon: Sliders, badge: "DFS" },
-    { label: "A*: Menu & Routing", href: "/ai/optimizer", icon: Sparkles, badge: "A*" },
-    { label: "Minimax: Bid Advisor", href: "/ai/pricing", icon: TrendingUp, badge: "Game" },
-  ];
-
-  const analyticsLinks = [
-    { label: "Algorithm Benchmarks", href: "/benchmarks", icon: Gauge, badge: "Lab" },
-    { label: "Profit & Reports", href: "/reports", icon: FileBarChart },
   ];
 
   const isLinkActive = (href: string) => {
@@ -76,7 +69,7 @@ export default function Sidebar() {
         <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 px-3">
           <span>AI Search Studio</span>
           <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.2 rounded border border-indigo-500/20">
-            Labs 04-07
+            Labs 04-05
           </span>
         </div>
         <nav className="flex flex-col gap-1">
@@ -99,39 +92,6 @@ export default function Sidebar() {
                 </div>
                 {link.badge && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700/60">
-                    {link.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      <div>
-        <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 px-3">
-          Verification & Intelligence
-        </div>
-        <nav className="flex flex-col gap-1">
-          {analyticsLinks.map((link) => {
-            const Icon = link.icon;
-            const active = isLinkActive(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                  active
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className={`w-4 h-4 ${active ? "text-white" : "text-slate-400"}`} />
-                  {link.label}
-                </div>
-                {link.badge && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
                     {link.badge}
                   </span>
                 )}

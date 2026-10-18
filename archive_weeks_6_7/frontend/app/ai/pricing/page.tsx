@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 import {
   TrendingUp,
@@ -50,6 +51,19 @@ export default function BidPricingPage() {
 
   return (
     <div className="space-y-6">
+      {/* Syllabus Deferred Notice */}
+      <div className="bg-purple-950/30 border border-purple-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-purple-300">
+        <div>
+          <span className="font-bold">⚠️ Syllabus Notice:</span> Module D (Week 7) is currently deferred &mdash; active coursework focuses strictly on <strong>Weeks 1&ndash;5 (BFS & DFS)</strong>.
+        </div>
+        <Link
+          href="/ai"
+          className="px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 font-semibold transition-colors shrink-0"
+        >
+          &larr; Back to AI Studio (Weeks 1-5)
+        </Link>
+      </div>
+
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider mb-1">

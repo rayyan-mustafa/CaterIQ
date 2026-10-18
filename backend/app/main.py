@@ -14,9 +14,7 @@ from backend.app.routers import (
     events,
     locations,
     menu,
-    payments,
     proposals,
-    reports,
 )
 
 # Auto-create tables on launch
@@ -59,6 +57,4 @@ app.include_router(clients.router, prefix=settings.API_V1_STR)
 app.include_router(events.router, prefix=settings.API_V1_STR)
 app.include_router(calendar.router, prefix=settings.API_V1_STR)
 app.include_router(proposals.router, prefix=settings.API_V1_STR)
-app.include_router(payments.router, prefix=settings.API_V1_STR)
-app.include_router(reports.router, prefix=settings.API_V1_STR)
 app.include_router(ai.router, prefix=settings.API_V1_STR)
