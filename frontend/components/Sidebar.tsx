@@ -22,8 +22,7 @@ export default function Sidebar() {
 
   const links = [
     { label: "Dashboard", href: "/", icon: LayoutDashboard },
-    { label: "Events & Orders", href: "/events", icon: CalendarDays },
-    { label: "Calendar Feed", href: "/calendar", icon: Navigation },
+    { label: "Events & Requests", href: "/events", icon: CalendarDays },
     { label: "Menu & Inventory", href: "/menu", icon: UtensilsCrossed },
   ];
 

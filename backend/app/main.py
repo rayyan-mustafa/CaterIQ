@@ -9,7 +9,6 @@ import backend.app.models
 from backend.app.routers import (
     ai,
     auth,
-    calendar,
     clients,
     events,
     locations,
@@ -55,6 +54,5 @@ app.include_router(locations.router, prefix=settings.API_V1_STR)
 app.include_router(menu.router, prefix=settings.API_V1_STR)
 app.include_router(clients.router, prefix=settings.API_V1_STR)
 app.include_router(events.router, prefix=settings.API_V1_STR)
-app.include_router(calendar.router, prefix=settings.API_V1_STR)
 app.include_router(proposals.router, prefix=settings.API_V1_STR)
 app.include_router(ai.router, prefix=settings.API_V1_STR)
