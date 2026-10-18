@@ -12,7 +12,7 @@ Currently, the active codebase is strictly scoped to **Weeks 1–5 (Labs 01–05
 - **Week 3–4**: Uninformed Search — Breadth-First Search (BFS) for allergen safe-path graph substitutions.
 - **Week 5**: Uninformed Search — Depth-First Search (DFS) for event menu constraint satisfaction.
 
-> **Note**: Advanced modules (A* Search, Greedy Best-First Search, Minimax Adversarial Pricing, Benchmarks, Stripe, Financial Reports) have been safely decoupled and stored in `archive_weeks_6_7/`. Do not reintroduce them into the active production build without explicit instructions.
+> **Note**: Advanced modules (A* Search, Greedy Best-First Search, Minimax Adversarial Pricing, Benchmarks, Stripe, FastAPI, and Next.js) have been decoupled and documented in `ARCHIVED_MODULES_REFERENCE.md`. Do not reintroduce them into the active production build without explicit instructions.
 
 ---
 
@@ -43,11 +43,9 @@ All commit messages must follow this structure:
 #### Dynamic Scope Mapping for CaterIQ:
 Always infer the appropriate scope from the modified files:
 - `ai`: Algorithmic engine, search routines (`ai_engine/search/`, `ai_engine/problems/`)
-- `backend`: FastAPI routes, schemas, core settings, or database models (`backend/app/`)
-- `ui`: Next.js frontend pages, components, hooks, or styles (`frontend/`)
-- `pipeline`: GitHub Actions workflows (`.github/workflows/ci.yml`)
-- `tests`: Test suites (`ai_engine/tests/`, `backend/app/tests/`)
-- `docs`: Documentation, reports, and visual diagrams
+- `ui`: Streamlit frontend pages, components, or styles (`app.py`, `.streamlit/`)
+- `data`: In-memory datasets, knowledge graphs (`data.py`)
+- `docs`: Documentation, reference blueprints, and visual diagrams
 - `repo`: Repository-wide configs, root guidelines, or scripts
 
 ### B. Commit Execution Rules
@@ -57,12 +55,11 @@ Always infer the appropriate scope from the modified files:
 2. **Atomic Commits**:
    - Avoid lumping unrelated components together. Group modifications into cohesive commits matching their scope.
 3. **Always Clean Working Tree**:
-   - Verify `git status` before committing to ensure no unwanted scratch files, `.env` files, or temporary build caches are tracked.
+   - Verify `git status` before committing to ensure no unwanted scratch files or temporary build caches are tracked.
 4. **Pre-Push Validation**:
-   - Run tests before pushing:
+   - Verify Streamlit runs without errors:
      ```bash
-     python -m pytest ai_engine/tests backend/app/tests
-     npm run build --prefix frontend
+     python -m streamlit run app.py --server.headless true
      ```
 5. **Seamless Push**:
    - Ensure the branch is tracked with `origin` and push cleanly using `git push -u origin <branch>`.
@@ -73,22 +70,16 @@ Always infer the appropriate scope from the modified files:
 
 ```text
 CaterIQ/
-├── .github/
-│   └── workflows/
-│       └── ci.yml               # Automated test & build workflow
-├── AGENTS.md                    # This guidelines and standards document
+├── .streamlit/                  # Next.js-inspired dark theme configuration
+├── AGENTS.md                    # AI Pair-programming guidelines and standards
+├── ARCHIVED_MODULES_REFERENCE.md # Complete technical blueprint of decoupled features
+├── README.md                    # Project overview & quickstart
 ├── ai_engine/                   # Weeks 1-5 Search & AI Engine
-│   ├── core.py                  # Node, Problem base classes
-│   ├── search/                  # BFS and DFS algorithms
-│   ├── problems/                # AllergenSubstitution & MenuConstraintSatisfaction
-│   └── tests/                   # AI Engine unit tests
-├── backend/                     # FastAPI Backend (v1 API)
-│   ├── app/                     # Routers, schemas, database models
-│   └── requirements.txt         # Backend Python dependencies
-├── frontend/                    # Next.js 14 App Router UI
-│   ├── app/                     # Pages (AI Studio, Events, Menu, Inventory)
-│   └── components/              # Material 3 / Tailwind components
-└── archive_weeks_6_7/           # Decoupled Weeks 6-7 modules (A*, Minimax, Stripe)
+│   ├── search/                  # BFS and DFS algorithms (core.py, bfs.py, dfs.py)
+│   └── problems/                # AllergenSubstitution & MenuConstraintSatisfaction
+├── app.py                       # Modern Next.js-aesthetic Streamlit UI
+├── data.py                      # Pure Python in-memory datasets (Weeks 2-3)
+└── requirements.txt             # Minimal dependencies (streamlit)
 ```
 
 ---
