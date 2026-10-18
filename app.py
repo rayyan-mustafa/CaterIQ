@@ -311,21 +311,21 @@ st.markdown(
 # ==============================================================================
 # STATE & NAVIGATION INITIALIZATION
 # ==============================================================================
-NAV_OPTIONS = [
-    "🔍 Module A: BFS Allergen Finder",
-    "🧩 Module B: DFS Menu Solver",
-    "📋 Events & Dietary Requests",
-]
-
-if "nav_choice_key" not in st.session_state:
-    st.session_state["nav_choice_key"] = NAV_OPTIONS[0]
+if "active_view" not in st.session_state:
+    st.session_state["active_view"] = "events"
 if "active_event_id" not in st.session_state:
+    st.session_state["active_event_id"] = None
+
+
+def navigate_to_events() -> None:
+    """Callback to return to Events & Dietary Requests."""
+    st.session_state["active_view"] = "events"
     st.session_state["active_event_id"] = None
 
 
 def navigate_and_run_bfs(event_id: str) -> None:
     """Callback to switch to Module A and automatically trigger BFS search."""
-    st.session_state["nav_choice_key"] = "🔍 Module A: BFS Allergen Finder"
+    st.session_state["active_view"] = "bfs"
     st.session_state["active_event_id"] = event_id
     st.session_state["auto_run_bfs"] = True
     ev = next((e for e in EVENTS if e["id"] == event_id), None)
@@ -333,13 +333,13 @@ def navigate_and_run_bfs(event_id: str) -> None:
         preset_title = f"{ev['title']} — {ev['client']} (Eliminate {', '.join(ev['target_allergens'])})"
         st.session_state["bfs_preset_selector"] = preset_title
         st.session_state["bfs_dish_selector"] = ev["requested_dish"]
-        st.session_state["bfs_target_allergens"] = [alg for alg in ev.get("target_allergens", []) if alg in ALLERGENS]
+        st.session_state["bfs_alg_selector"] = [alg for alg in ev.get("target_allergens", []) if alg in ALLERGENS]
         st.session_state["_last_bfs_preset"] = preset_title
 
 
 def navigate_and_run_dfs(event_id: str) -> None:
     """Callback to switch to Module B and automatically trigger DFS menu solver."""
-    st.session_state["nav_choice_key"] = "🧩 Module B: DFS Menu Solver"
+    st.session_state["active_view"] = "dfs"
     st.session_state["active_event_id"] = event_id
     st.session_state["auto_run_dfs"] = True
     ev = next((e for e in EVENTS if e["id"] == event_id), None)
@@ -370,14 +370,42 @@ with st.sidebar:
         """
     )
 
-    render_html('<div style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin: 16px 0 8px 4px;">Navigation</div>')
+    active_view = st.session_state.get("active_view", "events")
 
-    nav_choice = st.radio(
-        "Navigation",
-        NAV_OPTIONS,
-        key="nav_choice_key",
-        label_visibility="collapsed",
-    )
+    if active_view == "events":
+        render_html(
+            """
+            <div style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin: 16px 0 8px 4px;">Navigation Hub</div>
+            <div style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.25) 0%, rgba(99, 102, 241, 0.15) 100%); border: 1px solid #6366f1; border-radius:12px; padding:12px 14px; margin-bottom:12px; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);">
+                <div style="font-size:10px; font-weight:800; color:#818cf8; text-transform:uppercase; letter-spacing:0.06em;">Active Dashboard</div>
+                <div style="font-size:13px; font-weight:700; color:#ffffff; margin-top:2px;">📋 Events &amp; Dietary Requests</div>
+                <div style="font-size:11px; color:#cbd5e1; margin-top:4px; line-height:1.4;">Select any client booking in the main view to launch BFS or DFS solvers.</div>
+            </div>
+            """
+        )
+    else:
+        view_title = "🔍 Module A: BFS Allergen Finder" if active_view == "bfs" else "🧩 Module B: DFS Menu Solver"
+        badge_cls = "badge-indigo" if active_view == "bfs" else "badge-amber"
+        badge_lbl = "Lab 04: BFS" if active_view == "bfs" else "Lab 05: DFS"
+
+        render_html(
+            f"""
+            <div style="font-size:10px; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.08em; margin: 16px 0 8px 4px;">Active Workspace</div>
+            <div style="background: #0f172a; border: 1px solid #1e293b; border-radius:12px; padding:12px 14px; margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-size:10px; font-weight:800; color:#818cf8; text-transform:uppercase; letter-spacing:0.06em;">Live AI Engine</span>
+                    <span class="badge {badge_cls}">{badge_lbl}</span>
+                </div>
+                <div style="font-size:13px; font-weight:700; color:#ffffff; margin-top:4px;">{view_title}</div>
+            </div>
+            """
+        )
+        st.button(
+            "⬅️ Back to Events & Requests",
+            key="sidebar_back_to_events",
+            use_container_width=True,
+            on_click=navigate_to_events,
+        )
 
     # Active Client Context Badge in Sidebar
     if st.session_state.get("active_event_id"):
@@ -435,9 +463,19 @@ st.markdown(
 
 
 # ==============================================================================
-# TAB 1: BFS ALLERGEN FINDER (MODULE A - LAB 04)
+# MODULE A: BFS ALLERGEN FINDER (ACCESSIBLE VIA CLIENT EVENTS)
 # ==============================================================================
-if nav_choice == "🔍 Module A: BFS Allergen Finder":
+if active_view == "bfs":
+    col_b1, col_b2 = st.columns([1, 1])
+    with col_b1:
+        st.button("⬅️ Back to Events & Dietary Requests", key="bfs_back_btn", on_click=navigate_to_events, use_container_width=True)
+    with col_b2:
+        active_ev_id = st.session_state.get("active_event_id")
+        current_ev = next((e for e in EVENTS if e["id"] == active_ev_id), None)
+        if current_ev:
+            st.button(f"🧩 Solve Menu with DFS for {current_ev['client']}", key="bfs_switch_dfs", on_click=navigate_and_run_dfs, args=(current_ev["id"],), use_container_width=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+
     auto_run_bfs = st.session_state.pop("auto_run_bfs", False)
 
     render_html(
@@ -639,9 +677,19 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
 
 
 # ==============================================================================
-# TAB 2: DFS MENU CONSTRAINT SOLVER (MODULE B - LAB 05)
+# MODULE B: DFS MENU CONSTRAINT SOLVER (ACCESSIBLE VIA CLIENT EVENTS)
 # ==============================================================================
-elif nav_choice == "🧩 Module B: DFS Menu Solver":
+elif active_view == "dfs":
+    col_d1, col_d2 = st.columns([1, 1])
+    with col_d1:
+        st.button("⬅️ Back to Events & Dietary Requests", key="dfs_back_btn", on_click=navigate_to_events, use_container_width=True)
+    with col_d2:
+        active_ev_id = st.session_state.get("active_event_id")
+        current_ev = next((e for e in EVENTS if e["id"] == active_ev_id), None)
+        if current_ev:
+            st.button(f"🔍 Adapt '{current_ev['requested_dish']}' with BFS", key="dfs_switch_bfs", on_click=navigate_and_run_bfs, args=(current_ev["id"],), use_container_width=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+
     auto_run_dfs = st.session_state.pop("auto_run_dfs", False)
 
     render_html(
@@ -910,9 +958,9 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
 
 
 # ==============================================================================
-# TAB 3: EVENTS & CATERING REQUESTS (CONNECTED LIVE TO DFS & BFS)
+# PRIMARY HUB: EVENTS & CATERING REQUESTS (CONNECTED LIVE TO DFS & BFS)
 # ==============================================================================
-elif nav_choice == "📋 Events & Dietary Requests":
+else:
     render_html(
         """
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
