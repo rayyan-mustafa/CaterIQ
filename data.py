@@ -72,23 +72,32 @@ RECIPES = {
 # 5. Dish Catalog (Candidates for DFS Menu Constraint Satisfaction)
 # Format: List of Dictionaries 
 DISH_CATALOG = [
-    # --- Starters ---
+    # --- Starters (Sorted by Tier for Branch & Bound DFS) ---
     {
-        "id": "s1",
-        "name": "Tuscan Bruschetta",
+        "id": "s7",
+        "name": "Pan-Seared Hokkaido Scallops",
         "category": "starter",
-        "price_per_head": 9.0,
-        "is_vegetarian": True,
-        "is_gluten_free": False,
-        "is_vegan": True,
+        "price_per_head": 18.0,
+        "is_vegetarian": False,
+        "is_gluten_free": True,
+        "is_vegan": False,
     },
     {
-        "id": "s2",
-        "name": "Gluten-Free Caprese Skewers",
+        "id": "s6",
+        "name": "Jumbo Lump Crab Cakes",
         "category": "starter",
-        "price_per_head": 11.0,
-        "is_vegetarian": True,
+        "price_per_head": 16.0,
+        "is_vegetarian": False,
         "is_gluten_free": True,
+        "is_vegan": False,
+    },
+    {
+        "id": "s5",
+        "name": "Truffled Wild Mushroom Tart",
+        "category": "starter",
+        "price_per_head": 14.5,
+        "is_vegetarian": True,
+        "is_gluten_free": False,
         "is_vegan": False,
     },
     {
@@ -101,6 +110,24 @@ DISH_CATALOG = [
         "is_vegan": False,
     },
     {
+        "id": "s2",
+        "name": "Gluten-Free Caprese Skewers",
+        "category": "starter",
+        "price_per_head": 11.0,
+        "is_vegetarian": True,
+        "is_gluten_free": True,
+        "is_vegan": False,
+    },
+    {
+        "id": "s1",
+        "name": "Tuscan Bruschetta",
+        "category": "starter",
+        "price_per_head": 9.0,
+        "is_vegetarian": True,
+        "is_gluten_free": False,
+        "is_vegan": True,
+    },
+    {
         "id": "s4",
         "name": "Garden Herb Salad",
         "category": "starter",
@@ -111,6 +138,33 @@ DISH_CATALOG = [
     },
 
     # --- Mains ---
+    {
+        "id": "m7",
+        "name": "A5 Wagyu Tenderloin Steak",
+        "category": "main",
+        "price_per_head": 42.0,
+        "is_vegetarian": False,
+        "is_gluten_free": True,
+        "is_vegan": False,
+    },
+    {
+        "id": "m6",
+        "name": "Butter-Poached Maine Lobster Tail",
+        "category": "main",
+        "price_per_head": 38.5,
+        "is_vegetarian": False,
+        "is_gluten_free": True,
+        "is_vegan": False,
+    },
+    {
+        "id": "m5",
+        "name": "Roasted Mediterranean Sea Bass",
+        "category": "main",
+        "price_per_head": 32.0,
+        "is_vegetarian": False,
+        "is_gluten_free": True,
+        "is_vegan": False,
+    },
     {
         "id": "m1",
         "name": "Prime Ribeye Steak",
@@ -150,10 +204,19 @@ DISH_CATALOG = [
 
     # --- Desserts ---
     {
-        "id": "d1",
-        "name": "Dark Chocolate Lava Cake",
+        "id": "d5",
+        "name": "24k Gold Dark Chocolate Gianduja",
         "category": "dessert",
-        "price_per_head": 8.5,
+        "price_per_head": 13.5,
+        "is_vegetarian": True,
+        "is_gluten_free": True,
+        "is_vegan": False,
+    },
+    {
+        "id": "d4",
+        "name": "Tahitian Vanilla Bean Soufflé",
+        "category": "dessert",
+        "price_per_head": 11.0,
         "is_vegetarian": True,
         "is_gluten_free": False,
         "is_vegan": False,
@@ -165,6 +228,15 @@ DISH_CATALOG = [
         "price_per_head": 9.0,
         "is_vegetarian": True,
         "is_gluten_free": True,
+        "is_vegan": False,
+    },
+    {
+        "id": "d1",
+        "name": "Dark Chocolate Lava Cake",
+        "category": "dessert",
+        "price_per_head": 8.5,
+        "is_vegetarian": True,
+        "is_gluten_free": False,
         "is_vegan": False,
     },
     {

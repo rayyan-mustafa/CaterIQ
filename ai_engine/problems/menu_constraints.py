@@ -197,6 +197,9 @@ def solve_menu_constraints(
             "total_price_per_head": round(total_p, 2),
         })
 
+    # Sort packages descending by price so top package best matches the client budget tier
+    final_packages.sort(key=lambda p: p["total_price_per_head"], reverse=True)
+
     return {
         "found": True,
         "packages": final_packages,

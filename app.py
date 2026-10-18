@@ -120,10 +120,13 @@ st.markdown(
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     .metric-box-val {
-        font-size: 24px;
+        font-size: 18px;
         font-weight: 800;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.01em;
         margin-top: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .metric-box-lbl {
         font-size: 11px;
@@ -517,7 +520,8 @@ if nav_choice == "🔍 Module A: BFS Allergen Finder":
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         render_html('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:14px;">2. Search Exploration Results</div>')
 
-        if run_bfs or auto_run_bfs:
+        should_run_bfs = run_bfs or auto_run_bfs or True
+        if should_run_bfs:
             if not target_allergens:
                 st.warning("Please select at least one allergen to eliminate.")
             else:
@@ -650,11 +654,16 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
             help="Pre-loads real client event constraints, headcount, and budget requirements.",
         )
 
+        default_budget = float(active_dfs_event["budget_per_head"]) if active_dfs_event else 44.0
+        default_min_veg = int(active_dfs_event["min_vegetarian"]) if active_dfs_event else 1
+        default_min_gf = int(active_dfs_event["min_gluten_free"]) if active_dfs_event else 1
+
         active_dfs_event = None
         if selected_dfs_preset != "Custom Constraints Sandbox":
             ev_idx = dfs_presets.index(selected_dfs_preset) - 1
             active_dfs_event = EVENTS[ev_idx]
             st.session_state["active_event_id"] = active_dfs_event["id"]
+            current_budget_val = float(st.session_state.get(f"dfs_budget_{active_ev_key}", default_budget))
             render_html(
                 f"""
                 <div class="callout-box" style="border-left-color: #6366f1; margin: 10px 0 14px 0;">
@@ -662,17 +671,13 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                     <strong style="font-size:13px; color:#ffffff;">{active_dfs_event['title']} &bull; {active_dfs_event['client']}</strong>
                     <div style="font-size:12px; color:#cbd5e1; margin-top:3px;">
                         👥 <strong>Contract Headcount</strong>: <span style="color:#38bdf8; font-weight:700;">{active_dfs_event['guests']} guests</span> &bull; 
-                        💰 <strong>Budget Cap</strong>: <span style="color:#34d399; font-weight:700;">${active_dfs_event['budget_per_head']:.2f}/head</span>
+                        💰 <strong>Target Budget Cap</strong>: <span style="color:#34d399; font-weight:700;">${current_budget_val:.2f}/head</span> <span style="color:#94a3b8; font-size:11px;">(Base: ${active_dfs_event['budget_per_head']:.2f})</span>
                     </div>
                 </div>
                 """
             )
 
-        default_budget = float(active_dfs_event["budget_per_head"]) if active_dfs_event else 44.0
-        default_min_veg = int(active_dfs_event["min_vegetarian"]) if active_dfs_event else 1
-        default_min_gf = int(active_dfs_event["min_gluten_free"]) if active_dfs_event else 1
-
-        budget = st.slider("Maximum Budget per Head ($):", min_value=25.0, max_value=65.0, value=default_budget, step=1.0, key=f"dfs_budget_{active_ev_key}")
+        budget = st.slider("Maximum Budget per Head ($):", min_value=25.0, max_value=85.0, value=default_budget, step=1.0, key=f"dfs_budget_{active_ev_key}")
         min_veg = st.number_input("Minimum Vegetarian Dishes:", min_value=0, max_value=3, value=default_min_veg, key=f"dfs_veg_{active_ev_key}")
         min_gf = st.number_input("Minimum Gluten-Free Dishes:", min_value=0, max_value=3, value=default_min_gf, key=f"dfs_gf_{active_ev_key}")
 
@@ -687,7 +692,8 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         render_html('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:14px;">2. Solver Results &amp; Client Quotation</div>')
 
-        if run_dfs or auto_run_dfs:
+        should_run_dfs = run_dfs or auto_run_dfs or True
+        if should_run_dfs:
             slots = ["starter", "main", "dessert"]
 
             # Run with and without pruning to show benchmark proof to the instructor
@@ -698,6 +704,8 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                 min_vegetarian=min_veg,
                 min_gluten_free=min_gf,
                 use_pruning=True,
+                find_all=True,
+                max_solutions=15,
             )
 
             res_plain = solve_menu_constraints(
@@ -707,6 +715,8 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                 min_vegetarian=min_veg,
                 min_gluten_free=min_gf,
                 use_pruning=False,
+                find_all=True,
+                max_solutions=15,
             )
 
             active_res = res_pruned if enable_pruning else res_plain
@@ -728,7 +738,13 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
             st.markdown("<br>", unsafe_allow_html=True)
 
             # Pruning Effectiveness Comparison Box
-            nodes_saved = res_plain['nodes_expanded'] - res_pruned['nodes_expanded']
+            nodes_saved = max(0, res_plain['nodes_expanded'] - res_pruned['nodes_expanded'])
+            pct_saved = (nodes_saved / res_plain['nodes_expanded'] * 100) if res_plain['nodes_expanded'] > 0 else 0
+            if nodes_saved > 0:
+                badge_html = f'<span class="badge badge-emerald" style="font-size:12px; padding:6px 12px;">✂️ Saved {nodes_saved} Nodes ({pct_saved:.0f}% Pruned)</span>'
+            else:
+                badge_html = '<span class="badge badge-indigo" style="font-size:12px; padding:6px 12px;">🎯 Optimal Search (0 Waste)</span>'
+
             render_html(
                 f"""
                 <div style="background:#090d16; border:1px solid #1e293b; border-radius:12px; padding:14px 18px; margin-bottom:14px;">
@@ -738,14 +754,27 @@ elif nav_choice == "🧩 Module B: DFS Menu Solver":
                             <div style="font-size:12px; color:#cbd5e1;">Plain DFS (No Pruning): <strong style="color:#f87171;">{res_plain['nodes_expanded']} nodes</strong></div>
                             <div style="font-size:12px; color:#cbd5e1;">DFS with Pruning: <strong style="color:#34d399;">{res_pruned['nodes_expanded']} nodes</strong></div>
                         </div>
-                        <span class="badge badge-emerald" style="font-size:12px; padding:6px 12px;">✂️ Saved {nodes_saved} Nodes</span>
+                        {badge_html}
                     </div>
                 </div>
                 """
             )
 
             if active_res["found"]:
-                pkg = active_res["packages"][0]
+                selected_pkg_idx = 0
+                if len(active_res["packages"]) > 1:
+                    pkg_labels = [
+                        f"Option {i+1} (${p['total_price_per_head']:.2f}/head) — {p['dishes'][0]['name']}, {p['dishes'][1]['name']}, {p['dishes'][2]['name']}"
+                        for i, p in enumerate(active_res["packages"][:5])
+                    ]
+                    selected_pkg_idx = st.selectbox(
+                        "📦 Feasible Package Variants Discovered by DFS:",
+                        range(len(pkg_labels)),
+                        format_func=lambda i: pkg_labels[i],
+                        key=f"pkg_sel_{active_ev_key}_{int(budget)}",
+                        help="DFS explored the state space and found multiple compliant 3-course packages under budget."
+                    )
+                pkg = active_res["packages"][selected_pkg_idx]
                 guest_count = active_dfs_event["guests"] if active_dfs_event else 50
                 client_name = active_dfs_event["client"] if active_dfs_event else "Private Event Client"
                 total_contract_cost = pkg["total_price_per_head"] * guest_count
@@ -920,6 +949,8 @@ elif nav_choice == "📋 Events & Dietary Requests":
                     min_vegetarian=ev["min_vegetarian"],
                     min_gluten_free=ev["min_gluten_free"],
                     use_pruning=True,
+                    find_all=True,
+                    max_solutions=10,
                 )
                 if quick_dfs["found"]:
                     q_pkg = quick_dfs["packages"][0]

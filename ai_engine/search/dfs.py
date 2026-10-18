@@ -88,6 +88,7 @@ def depth_first_search(problem, use_pruning=True, max_depth=None, find_all=False
                 "depth": best_node.depth,
                 "actions": best_node.solution(),
                 "solutions_found": len(solutions),
+                "all_solutions": [s.state_path() for s in solutions],
             },
         )
 
