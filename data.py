@@ -178,7 +178,7 @@ DISH_CATALOG = [
     },
 ]
 
-# 6. Client Catering Event Requests (Input Constraints for AI)
+# 6. Client Catering Event Requests (Input Constraints for Real-World AI Delivery)
 EVENTS = [
     {
         "id": "ev1",
@@ -186,8 +186,14 @@ EVENTS = [
         "client": "Sarah Jenkins",
         "date": "2026-10-27",
         "guests": 85,
-        "notes": "Severe Peanut Allergy; Needs at least 1 Vegetarian dish",
         "status": "Confirmed",
+        "budget_per_head": 48.0,
+        "min_vegetarian": 1,
+        "min_gluten_free": 0,
+        "requested_dish": "Thai Satay Skewers",
+        "target_allergens": ["peanut"],
+        "allergy_context": "Keynote speaker has severe peanut anaphylaxis",
+        "notes": "Severe Peanut Allergy; Needs at least 1 Vegetarian dish in 3-course package; Budget $48/head",
     },
     {
         "id": "ev2",
@@ -195,8 +201,14 @@ EVENTS = [
         "client": "Marcus Vance",
         "date": "2026-11-04",
         "guests": 30,
-        "notes": "Strict Gluten-Free requirement; Budget under $45 per head",
         "status": "Confirmed",
+        "budget_per_head": 44.0,
+        "min_vegetarian": 0,
+        "min_gluten_free": 2,
+        "requested_dish": "Tuscan Bruschetta",
+        "target_allergens": ["gluten"],
+        "allergy_context": "Board members require certified Celiac-safe appetizers",
+        "notes": "Strict Gluten-Free requirement (min 2 GF dishes); Bruschetta must be adapted; Budget under $44/head",
     },
     {
         "id": "ev3",
@@ -204,7 +216,14 @@ EVENTS = [
         "client": "Dr. Aris Thorne",
         "date": "2026-11-15",
         "guests": 120,
-        "notes": "Dairy-Free and Vegetarian options mandatory",
         "status": "Planning",
+        "budget_per_head": 42.0,
+        "min_vegetarian": 2,
+        "min_gluten_free": 1,
+        "requested_dish": "Chocolate Almond Cake",
+        "target_allergens": ["dairy"],
+        "allergy_context": "Eco-friendly banquet with mandatory non-dairy dessert",
+        "notes": "Dairy-Free dessert adaptation; Minimum 2 Vegetarian & 1 Gluten-Free dishes; Budget $42/head",
     },
 ]
+
