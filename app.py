@@ -316,7 +316,6 @@ with st.sidebar:
             "🔍 Module A: BFS Allergen Finder",
             "🧩 Module B: DFS Menu Solver",
             "📋 Events & Dietary Requests",
-            "📖 Menu & Graph Catalog",
         ],
         label_visibility="collapsed",
     )
@@ -665,96 +664,4 @@ elif nav_choice == "📋 Events & Dietary Requests":
         )
 
 
-# ==============================================================================
-# TAB 4: MENU & GRAPH CATALOG
-# ==============================================================================
-elif nav_choice == "📖 Menu & Graph Catalog":
-    st.markdown(
-        """
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
-            <div>
-                <h2 style="font-size:20px; font-weight:800; color:#ffffff; margin:0;">Catering Domain Knowledge Graph</h2>
-                <p style="font-size:12px; color:#94a3b8; margin:2px 0 0 0;">Pure Python lists, dictionaries, and sets representing the search space.</p>
-            </div>
-            <span class="badge badge-indigo">Pure Python Dataset</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
-    t1, t2 = st.tabs(["🍽️ Dish Catalog (DFS Candidates)", "🔄 Substitution Graph (BFS Edges)"])
-
-    with t1:
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:4px;">Course Candidates for Menu Assembly</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#94a3b8; margin-bottom:12px;">The DFS algorithm branches across these items to fill course slots under budget constraints.</div>', unsafe_allow_html=True)
-
-        rows_html = ""
-        for d in DISH_CATALOG:
-            veg_badge = '<span class="badge badge-emerald">Yes</span>' if d["is_vegetarian"] else '<span class="badge badge-rose">No</span>'
-            gf_badge = '<span class="badge badge-emerald">Yes</span>' if d["is_gluten_free"] else '<span class="badge badge-rose">No</span>'
-            cat_color = "#818cf8" if d["category"] == "starter" else "#38bdf8" if d["category"] == "main" else "#f472b6"
-
-            rows_html += f"""
-            <tr>
-                <td><span style="color:{cat_color}; font-weight:700;">{d['category'].capitalize()}</span></td>
-                <td><strong style="color:#ffffff;">{d['name']}</strong></td>
-                <td><span style="color:#34d399; font-weight:700;">${d['price_per_head']:.2f}</span></td>
-                <td>{veg_badge}</td>
-                <td>{gf_badge}</td>
-            </tr>
-            """
-
-        table_html = f"""
-        <table class="modern-table">
-            <thead>
-                <tr>
-                    <th>Course Slot</th>
-                    <th>Dish Name</th>
-                    <th>Price / Head</th>
-                    <th>Vegetarian</th>
-                    <th>Gluten-Free</th>
-                </tr>
-            </thead>
-            <tbody>
-                {rows_html}
-            </tbody>
-        </table>
-        """
-        st.markdown(table_html, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with t2:
-        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:14px; font-weight:800; color:#ffffff; margin-bottom:4px;">Ingredient Substitution Graph</div>', unsafe_allow_html=True)
-        st.markdown('<div style="font-size:12px; color:#94a3b8; margin-bottom:12px;">Directed edges in our allergen state-space graph traversed by Breadth-First Search.</div>', unsafe_allow_html=True)
-
-        graph_rows = ""
-        for src, subs in ALLOWED_SUBSTITUTIONS.items():
-            for dest, cost in subs:
-                graph_rows += f"""
-                <tr>
-                    <td><strong style="color:#f87171;">{src}</strong></td>
-                    <td style="color:#94a3b8; text-align:center;">&rarr;</td>
-                    <td><strong style="color:#34d399;">{dest}</strong></td>
-                    <td><span class="badge badge-indigo">Cost {cost:.1f}</span></td>
-                </tr>
-                """
-
-        graph_table_html = f"""
-        <table class="modern-table">
-            <thead>
-                <tr>
-                    <th>From Ingredient (Unsafe)</th>
-                    <th style="text-align:center;">Direction</th>
-                    <th>To Substitute (Safe)</th>
-                    <th>Step Cost</th>
-                </tr>
-            </thead>
-            <tbody>
-                {graph_rows}
-            </tbody>
-        </table>
-        """
-        st.markdown(graph_table_html, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
