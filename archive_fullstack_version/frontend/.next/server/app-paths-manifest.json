@@ -1,9 +1,0 @@
-{
-  "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js",
-  "/menu/page": "app/menu/page.js",
-  "/ai/allergen/page": "app/ai/allergen/page.js",
-  "/ai/constraints/page": "app/ai/constraints/page.js",
-  "/events/page": "app/events/page.js",
-  "/ai/page": "app/ai/page.js"
-}

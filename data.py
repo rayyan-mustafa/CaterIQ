@@ -9,7 +9,7 @@ No external SQL or databases required.
 # 1. Allergen Reference List
 ALLERGENS = ["peanut", "tree_nut", "gluten", "dairy", "soy", "egg"]
 
-# 2. Ingredients and the Allergens they contain (Week 2 Dict of Sets)
+# 2. Ingredients and the Allergens they contain 
 INGREDIENT_ALLERGENS = {
     "Peanut Butter": {"peanut"},
     "Sunflower Seed Butter": set(),
@@ -70,7 +70,7 @@ RECIPES = {
 }
 
 # 5. Dish Catalog (Candidates for DFS Menu Constraint Satisfaction)
-# Format: List of Dictionaries (Week 2 List of Dicts)
+# Format: List of Dictionaries 
 DISH_CATALOG = [
     # --- Starters ---
     {
