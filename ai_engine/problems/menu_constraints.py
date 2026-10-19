@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from ai_engine.search.core import Problem, SearchResult
 from ai_engine.search.dfs import depth_first_search
 
-
+#frozen=True makes every Dish object immutable (read-only) and hashable.
 @dataclass(frozen=True)
 class Dish:
     """Represents a dish option for a menu course."""
@@ -115,7 +115,7 @@ class MenuConstraintProblem(Problem):
 
         return False
 
-
+# This function connects the Streamlit UI to the DFS search engine.
 def solve_menu_constraints(
     slots,
     dishes,

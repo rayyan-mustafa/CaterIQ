@@ -5,6 +5,7 @@ Contains the fundamental classes:
 2. Node: A search tree node (state, parent, action, path_cost, depth).
 3. Problem: Abstract base class defining formal search problem methods.
 """
+#provide the __init__ function that initliaze the parent, action, path_cost, depth and heuristic_value
 
 from dataclasses import dataclass, field
 
@@ -12,14 +13,15 @@ from dataclasses import dataclass, field
 @dataclass
 class SearchResult:
     """Stores the output and performance metrics of a search run."""
-    solution_path: list = None
-    total_cost: float = None
-    nodes_expanded: int = 0
-    nodes_generated: int = 0
-    max_frontier_size: int = 0
-    runtime_ms: float = 0.0
-    found: bool = False
-    metadata: dict = field(default_factory=dict)
+    solution_path: list = None  #list of actions to reach the goal from the start state 
+    total_cost: float = None #total cost of the solution path
+    nodes_expanded: int = 0 #the count of nodes that were removed from the stack and had their successors explored
+    nodes_generated: int = 0 #count of sucessor nodes created and added to the frontier
+    max_frontier_size: int = 0 #peak consumption of the memory of the stack/queue during search
+    runtime_ms: float = 0.0 #the time it took for the search to complete
+    found: bool = False #whether the goal was found
+    metadata: dict = field(default_factory=dict) #optional extra information such as heuristic used, depth of goal etc 
+    #default_factory is used for getting the fresh dictionary instead of sharing mutable default
 
 
 class Node:
@@ -45,6 +47,7 @@ class Node:
         self.depth = 0 if parent is None else parent.depth + 1
         self.heuristic_value = float(heuristic_value)
 
+    #use for backtracking the goal node to the start state node and return the list of actions in that path  
     def solution(self):
         """Returns the list of actions from the start node to this node."""
         actions = []
@@ -56,6 +59,7 @@ class Node:
         actions.reverse()
         return actions
 
+    #backtracking the goal node to the start state node and return the list of actions in that path  
     def state_path(self):
         """Returns the list of states from the start node to this node."""
         states = []
@@ -66,10 +70,11 @@ class Node:
         states.reverse()
         return states
 
+    #it is used for debugging to see the state and cost of the node
     def __repr__(self):
         return f"<Node state={self.state!r} cost={self.path_cost}>"
 
-
+#any problem like allergen substitution and menu planning, inherits from this class
 class Problem:
     """Base template for all search problems.
 

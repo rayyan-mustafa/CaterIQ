@@ -30,7 +30,7 @@ class AllergenSubstitutionProblem(Problem):
     """
 
     def __init__(self, initial_ingredients, ingredient_allergens, allowed_substitutions, target_allergens):
-        self._initial = frozenset(initial_ingredients)
+        self._initial = frozenset(initial_ingredients) #use frozenset because it is immutable and hashable
         self.ingredient_allergens = {k: set(v) for k, v in ingredient_allergens.items()}
         self.allowed_substitutions = allowed_substitutions
         self.target_allergens = set(target_allergens)
@@ -44,6 +44,8 @@ class AllergenSubstitutionProblem(Problem):
         for ing in state:
             allergens_in_ing = self.ingredient_allergens.get(ing, set())
             # If the ingredient contains any target allergen, it's not safe
+            #  (isdisjoint): Goal test! Checks if the allergens in any ingredient overlap with the guest's allergens
+            #   (target_allergens). If there is zero overlap across all ingredients, goal is reached!
             if not allergens_in_ing.isdisjoint(self.target_allergens):
                 return False
         return True
@@ -62,6 +64,7 @@ class AllergenSubstitutionProblem(Problem):
                     )
         return available_actions
 
+# result() implements the formal transition model by replacing an unsafe ingredient and returning a new frozenset. 
     def result(self, state, action):
         """Applies the swap to produce a new recipe ingredient set."""
         new_set = set(state)
@@ -86,7 +89,10 @@ class SubstitutionSolution:
     safety_disclaimer: str = (
         "Note: Allergen finder is an AI decision aid. Kitchen staff must verify all physical ingredient packaging."
     )
-
+# Since all swaps have a unit cost of 1.0, Breadth-First Search guarantees the minimal number of substitutions. 
+# The helper function find_allergen_substitutions() ties everything together: it initializes the problem, executes BFS,
+#  extracts the final safe recipe from res.solution_path[-1], and packages the required swaps and search metrics into a
+#   clean SubstitutionSolution object for the Streamlit dashboard.
 
 def find_allergen_substitutions(
     ingredients,

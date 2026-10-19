@@ -23,6 +23,7 @@ def breadth_first_search(problem, max_depth=None):
     initial_state = problem.initial_state()
 
     # Step 1: Check if the starting state is already the goal
+    #Early goal check on the root. If the recipe is already allergen-free, return immediately without building queues.
     if problem.is_goal(initial_state):
         elapsed = (time.perf_counter() - start_time) * 1000.0
         return SearchResult(
@@ -70,7 +71,8 @@ def breadth_first_search(problem, max_depth=None):
                     path_cost=cost,
                 )
 
-                # Goal test when node is generated
+                # Early Goal Testing
+                #before expanding more nodes check the generated node for the goal
                 if problem.is_goal(child_state):
                     elapsed = (time.perf_counter() - start_time) * 1000.0
                     return SearchResult(

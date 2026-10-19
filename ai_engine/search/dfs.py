@@ -74,6 +74,7 @@ def depth_first_search(problem, use_pruning=True, max_depth=None, find_all=False
     elapsed = (time.perf_counter() - start_time) * 1000.0
 
     # Step 5: Format and return result
+    # if we got the solution and if not then return the failure
     if solutions:
         best_node = solutions[0]
         return SearchResult(
