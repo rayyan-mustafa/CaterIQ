@@ -88,3 +88,5 @@ CaterIQ/
 - **Student**: Rayyan Mustafa
 - **Registration Number**: 2312335
 - **Course**: Artificial Intelligence Lab — Semester Project
+- **Live Deployment**: [https://cateriq.streamlit.app/](https://cateriq.streamlit.app/)
+- **Repository**: [https://github.com/rayyan-mustafa/CaterIQ](https://github.com/rayyan-mustafa/CaterIQ)

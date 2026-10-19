@@ -432,8 +432,17 @@ with st.sidebar:
             <div style="font-size:13px; font-weight:700; color:#ffffff;">Rayyan Mustafa</div>
             <div style="font-size:12px; color:#94a3b8;">Reg #: <span style="color:#f8fafc; font-weight:600;">2312335</span></div>
             <div style="font-size:12px; color:#94a3b8;">Focus: <span style="color:#38bdf8; font-weight:600;">Weeks 1–5 (AI Lab)</span></div>
-            <div style="margin-top:8px;">
+            <div style="margin-top:8px; display:flex; align-items:center; gap:6px;">
                 <span class="badge badge-emerald">100% Pure Python</span>
+                <span class="badge badge-indigo">Live Cloud</span>
+            </div>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:6px; border-top: 1px solid rgba(255,255,255,0.08); padding-top:10px;">
+                <a href="https://github.com/rayyan-mustafa/CaterIQ" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px; background: rgba(255,255,255,0.05); border: 1px solid #334155; border-radius: 6px; padding: 6px 10px; color: #f8fafc; font-size: 11px; font-weight: 600;">
+                    <span>📂 GitHub Repository</span>
+                </a>
+                <a href="https://cateriq.streamlit.app" target="_blank" style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.35); border-radius: 6px; padding: 6px 10px; color: #a5b4fc; font-size: 11px; font-weight: 600;">
+                    <span>🌐 cateriq.streamlit.app</span>
+                </a>
             </div>
         </div>
         """,

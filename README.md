@@ -1,10 +1,27 @@
 # CaterIQ — AI Search Engine & Catering Intelligence Studio
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://cateriq.streamlit.app/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-rayyan--mustafa%2FCaterIQ-181717?style=flat&logo=github)](https://github.com/rayyan-mustafa/CaterIQ)
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+> 🌐 **Live Interactive App**: [https://cateriq.streamlit.app/](https://cateriq.streamlit.app/)  
+> 📁 **GitHub Repository**: [https://github.com/rayyan-mustafa/CaterIQ](https://github.com/rayyan-mustafa/CaterIQ)  
 > **Course:** Artificial Intelligence Lab (Semester Project)  
 > **Student:** Rayyan Mustafa  
 > **Registration Number:** 2312335  
 > **Scope:** Weeks 1–5 Uninformed Search (BFS & DFS)  
 > **Tech Stack:** 100% Pure Python (No SQL/Databases, No JavaScript, No Complex ORMs)  
+
+---
+
+## 🌐 Live Cloud Deployment
+
+CaterIQ is deployed live to **Streamlit Community Cloud** with continuous integration from the `main` branch.
+
+- **URL:** [https://cateriq.streamlit.app/](https://cateriq.streamlit.app/)
+- **Infrastructure:** Pure Python CPython container with WebSocket real-time state synchronization
+- **Accessibility:** 100% Public (No login or credentials required)
 
 ---
 
