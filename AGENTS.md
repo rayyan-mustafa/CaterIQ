@@ -43,7 +43,7 @@ All commit messages must follow this structure:
 #### Dynamic Scope Mapping for CaterIQ:
 Always infer the appropriate scope from the modified files:
 - `ai`: Algorithmic engine, search routines (`ai_engine/search/`, `ai_engine/problems/`)
-- `ui`: Streamlit frontend pages, components, or styles (`app.py`, `.streamlit/`)
+- `ui`: Streamlit frontend pages, components, or styles (`streamlit_app.py`, `.streamlit/`)
 - `data`: In-memory datasets, knowledge graphs (`data.py`)
 - `docs`: Documentation, reference blueprints, and visual diagrams
 - `repo`: Repository-wide configs, root guidelines, or scripts
@@ -59,7 +59,7 @@ Always infer the appropriate scope from the modified files:
 4. **Pre-Push Validation**:
    - Verify Streamlit runs without errors:
      ```bash
-     python -m streamlit run app.py --server.headless true
+     python -m streamlit run streamlit_app.py --server.headless true
      ```
 5. **Seamless Push**:
    - Ensure the branch is tracked with `origin` and push cleanly using `git push -u origin <branch>`.
@@ -77,7 +77,7 @@ CaterIQ/
 ├── ai_engine/                   # Weeks 1-5 Search & AI Engine
 │   ├── search/                  # BFS and DFS algorithms (core.py, bfs.py, dfs.py)
 │   └── problems/                # AllergenSubstitution & MenuConstraintSatisfaction
-├── app.py                       # Modern Next.js-aesthetic Streamlit UI
+├── streamlit_app.py             # Modern Next.js-aesthetic Streamlit UI
 ├── data.py                      # Pure Python in-memory datasets (Weeks 2-3)
 └── requirements.txt             # Minimal dependencies (streamlit)
 ```

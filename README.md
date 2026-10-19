@@ -23,7 +23,7 @@
 
 ```text
 CaterIQ/
-├── app.py                     # Streamlit Pure Python Interactive UI
+├── streamlit_app.py           # Streamlit Pure Python Interactive UI
 ├── data.py                    # In-memory domain knowledge graph (Lists & Dictionaries)
 ├── requirements.txt           # Minimal dependency: streamlit
 ├── ai_engine/
@@ -48,7 +48,7 @@ pip install -r requirements.txt
 
 ### 2. Launch the Application
 ```powershell
-streamlit run app.py
+streamlit run streamlit_app.py
 ```
 > The application will automatically open in your default browser at **[http://localhost:8501](http://localhost:8501)**.
 
